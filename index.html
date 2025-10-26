@@ -636,12 +636,34 @@
     });
 
     // =======================================
-    // GAME ENGINE (Placeholder - will expand)
+    // GAME ENGINE
     // =======================================
-    let countdownValue = 3;
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    let animationFrame = null;
+
+    // Game variables
+    const KEYS = ['a','s','d','f','g','h','j','k','l'];
+    let myPosition = 0;
+    let myProgress = 0;
+    let myScore = 0;
+    let myCombo = 0;
+    let myNextKey = null;
+    let opponentData = null;
+    let raceStartTime = 0;
+    const FINISH_LINE = 0.75; // 75% of screen width
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function getRandomKey() {
+      return KEYS[Math.floor(Math.random() * KEYS.length)];
+    }
 
     function startCountdown() {
-      countdownValue = 3;
+      let countdownValue = 3;
       const interval = setInterval(() => {
         if (countdownValue > 0) {
           showNotification(countdownValue.toString(), '#ffffff');
@@ -654,18 +676,276 @@
     }
 
     function startGame() {
-      console.log('Game starting...');
-      showNotification('Race started!', '#00ffff');
-      // Game loop will be implemented here
+      resizeCanvas();
+
+      // Reset game state
+      myPosition = canvas.width * 0.1;
+      myProgress = 0;
+      myScore = 0;
+      myCombo = 0;
+      myNextKey = getRandomKey();
+      raceStartTime = Date.now();
+
+      // Start game loop
+      gameLoop();
+
+      // Add keyboard listener
+      document.addEventListener('keydown', handleKeyPress);
+    }
+
+    function handleKeyPress(e) {
+      if (gameState !== 'playing') return;
+
+      const key = e.key.toLowerCase();
+
+      if (key === myNextKey) {
+        // Correct key!
+        myPosition += canvas.width * 0.05; // Move forward
+        myScore += 10;
+        myCombo++;
+        myNextKey = getRandomKey();
+
+        // Calculate progress (0 to 1)
+        const startX = canvas.width * 0.1;
+        const finishX = canvas.width * FINISH_LINE;
+        myProgress = Math.min(1, (myPosition - startX) / (finishX - startX));
+
+        // Send update to server
+        socket.emit('player:update', {
+          position: myPosition,
+          progress: myProgress,
+          score: myScore,
+          combo: myCombo
+        });
+
+        // Check if finished
+        if (myProgress >= 1) {
+          finishRace();
+        }
+      } else if (KEYS.includes(key)) {
+        // Wrong key
+        myCombo = 0;
+      }
+    }
+
+    function finishRace() {
+      gameState = 'finished';
+      const raceTime = ((Date.now() - raceStartTime) / 1000).toFixed(1);
+
+      socket.emit('player:finished', {
+        score: myScore,
+        time: raceTime
+      });
+
+      document.removeEventListener('keydown', handleKeyPress);
     }
 
     function updateOpponentStates(players) {
-      // Update opponent positions
-      console.log('Opponents updated:', players);
+      // Find opponent (not me)
+      const opponent = players.find(p => p.id !== myPlayerId);
+      if (opponent) {
+        opponentData = opponent;
+      }
+    }
+
+    function gameLoop() {
+      if (gameState !== 'playing') {
+        cancelAnimationFrame(animationFrame);
+        return;
+      }
+
+      // Clear canvas
+      ctx.fillStyle = '#020208';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw grid background
+      drawGrid();
+
+      // Draw finish line
+      drawFinishLine();
+
+      // Draw my runner
+      drawRunner(myPosition, canvas.height * 0.4, '#00ffff', myPlayerName, myNextKey, true);
+
+      // Draw opponent runner
+      if (opponentData && currentRoom) {
+        const opponentPlayer = currentRoom.players.find(p => p.id !== myPlayerId);
+        if (opponentPlayer) {
+          const startX = canvas.width * 0.1;
+          const finishX = canvas.width * FINISH_LINE;
+          const opponentPos = startX + (opponentData.progress * (finishX - startX));
+
+          drawRunner(opponentPos, canvas.height * 0.6, '#ff00ff', opponentPlayer.name, null, false);
+        }
+      }
+
+      // Draw HUD
+      drawGameHUD();
+
+      animationFrame = requestAnimationFrame(gameLoop);
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      const cellSize = 40;
+
+      for (let x = 0; x < canvas.width; x += cellSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y < canvas.height; y += cellSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawFinishLine() {
+      const x = canvas.width * FINISH_LINE;
+
+      ctx.save();
+      ctx.strokeStyle = '#00ff88';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 5]);
+
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.font = 'bold 20px Orbitron';
+      ctx.fillStyle = '#00ff88';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 20;
+      ctx.fillText('FINISH', x, 30);
+      ctx.restore();
+    }
+
+    function drawRunner(x, y, color, name, nextKey, isMe) {
+      // Draw runner shape (poly style)
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Glow effect
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 30;
+
+      // Body (triangle)
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, -20);
+      ctx.lineTo(15, 10);
+      ctx.lineTo(-15, 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // Head
+      ctx.beginPath();
+      ctx.moveTo(0, -30);
+      ctx.lineTo(8, -20);
+      ctx.lineTo(-8, -20);
+      ctx.closePath();
+      ctx.fill();
+
+      // Legs
+      ctx.beginPath();
+      ctx.moveTo(5, 10);
+      ctx.lineTo(10, 30);
+      ctx.lineTo(5, 30);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-5, 10);
+      ctx.lineTo(-5, 30);
+      ctx.lineTo(-10, 30);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+
+      // Draw name above runner
+      ctx.save();
+      ctx.font = 'bold 14px Orbitron';
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 15;
+      ctx.fillText(name, x, y - 50);
+      ctx.restore();
+
+      // Draw next key (only for player)
+      if (isMe && nextKey) {
+        ctx.save();
+        ctx.font = 'bold 40px Orbitron';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 30;
+        const keyY = y - 80 - Math.sin(Date.now() * 0.005) * 5;
+        ctx.fillText(nextKey.toUpperCase(), x, keyY);
+        ctx.restore();
+      }
+    }
+
+    function drawGameHUD() {
+      ctx.save();
+      ctx.font = 'bold 18px Orbitron';
+      ctx.textAlign = 'left';
+
+      // My stats (left side)
+      ctx.fillStyle = '#00ffff';
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 15;
+      ctx.fillText(`Score: ${myScore}`, 20, canvas.height - 60);
+      ctx.fillText(`Combo: x${myCombo}`, 20, canvas.height - 30);
+
+      // Opponent stats (right side)
+      if (opponentData) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ff00ff';
+        ctx.shadowColor = '#ff00ff';
+        ctx.fillText(`Score: ${opponentData.score || 0}`, canvas.width - 20, canvas.height - 60);
+        ctx.fillText(`Combo: x${opponentData.combo || 0}`, canvas.width - 20, canvas.height - 30);
+      }
+
+      ctx.restore();
     }
 
     function showWinner(winner) {
-      showNotification(`${winner.name} WINS! Time: ${winner.time}s`, '#00ff88');
+      gameState = 'finished';
+      cancelAnimationFrame(animationFrame);
+      document.removeEventListener('keydown', handleKeyPress);
+
+      // Draw winner overlay
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = 'bold 60px Orbitron';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = winner.id === myPlayerId ? '#00ff88' : '#ff00ff';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 50;
+      ctx.fillText(`${winner.name} WINS!`, canvas.width / 2, canvas.height / 2 - 50);
+
+      ctx.font = 'bold 30px Orbitron';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 20;
+      ctx.fillText(`Time: ${winner.time}s | Score: ${winner.score}`, canvas.width / 2, canvas.height / 2 + 20);
+
+      ctx.font = '20px Orbitron';
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText('Returning to menu in 5 seconds...', canvas.width / 2, canvas.height / 2 + 80);
+      ctx.restore();
+
       setTimeout(() => {
         gameState = 'menu';
         currentRoom = null;
@@ -673,6 +953,9 @@
         showMainMenu();
       }, 5000);
     }
+
+    // Handle window resize
+    window.addEventListener('resize', resizeCanvas);
 
     // =======================================
     // INITIALIZE
