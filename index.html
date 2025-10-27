@@ -24,8 +24,8 @@
       background: #000;
     }
 
-    /* Username Modal */
-    #username-modal {
+    /* Main Menu */
+    #main-menu {
       position: fixed;
       top: 0;
       left: 0;
@@ -38,59 +38,45 @@
       z-index: 10000;
     }
 
-    #username-modal.hidden {
+    #main-menu.hidden {
       display: none;
     }
 
-    .modal-content {
+    .menu-content {
       background: linear-gradient(135deg, #020208, #080010);
       border: 2px solid #00ffff;
       border-radius: 12px;
       padding: 40px;
-      max-width: 400px;
+      max-width: 500px;
       width: 90%;
       box-shadow: 0 0 50px rgba(0, 255, 255, 0.5);
       text-align: center;
     }
 
-    .modal-title {
-      font-size: 32px;
+    .menu-title {
+      font-size: 42px;
       color: #00ffff;
       margin-bottom: 10px;
       text-shadow: 0 0 20px #00ffff;
       letter-spacing: 3px;
     }
 
-    .modal-subtitle {
-      font-size: 14px;
+    .menu-subtitle {
+      font-size: 16px;
       color: #ff00ff;
       margin-bottom: 30px;
       letter-spacing: 2px;
     }
 
-    #username-input {
-      width: 100%;
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 2px solid rgba(0, 255, 255, 0.5);
-      border-radius: 8px;
-      color: #00ffff;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
-      text-align: center;
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
       margin-bottom: 20px;
-      outline: none;
-      transition: all 0.3s ease;
     }
 
-    #username-input:focus {
-      border-color: #00ffff;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-    }
-
-    #username-submit {
-      width: 100%;
-      padding: 15px;
+    .menu-btn {
+      padding: 18px;
       background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 136, 0.3));
       border: 2px solid #00ffff;
       border-radius: 8px;
@@ -104,15 +90,81 @@
       letter-spacing: 2px;
     }
 
-    #username-submit:hover:not(:disabled) {
+    .menu-btn:hover:not(:disabled) {
       background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 255, 136, 0.5));
       box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
       transform: translateY(-2px);
     }
 
-    #username-submit:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .menu-btn.secondary {
+      background: linear-gradient(135deg, rgba(255, 0, 255, 0.2), rgba(138, 0, 255, 0.2));
+      border-color: #ff00ff;
+      color: #ff00ff;
+    }
+
+    .menu-btn.secondary:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(138, 0, 255, 0.3));
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
+    }
+
+    .player-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+    }
+
+    .player-info-label {
+      font-size: 12px;
+      color: rgba(0, 255, 255, 0.6);
+      margin-bottom: 5px;
+    }
+
+    .player-info-value {
+      font-size: 16px;
+      color: #00ffff;
+      font-weight: bold;
+    }
+
+    .player-info-edit {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .player-info-input {
+      flex: 1;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 4px;
+      color: #00ffff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      text-align: center;
+      outline: none;
+    }
+
+    .player-info-input:focus {
+      border-color: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    .player-info-btn {
+      padding: 10px 15px;
+      background: rgba(0, 255, 255, 0.2);
+      border: 1px solid #00ffff;
+      border-radius: 4px;
+      color: #00ffff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .player-info-btn:hover {
+      background: rgba(0, 255, 255, 0.3);
     }
 
     /* Connection Status */
@@ -331,16 +383,91 @@
       from { transform: translate(-50%, -20px); opacity: 0; }
       to { transform: translate(-50%, 0); opacity: 1; }
     }
+
+    /* Practice Mode UI */
+    #practice-mode-ui {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(2, 2, 8, 0.95);
+      border: 2px solid #00ffff;
+      border-radius: 12px;
+      padding: 30px;
+      z-index: 500;
+      min-width: 400px;
+      display: none;
+      text-align: center;
+    }
+
+    #practice-mode-ui.visible {
+      display: block;
+    }
+
+    .practice-title {
+      font-size: 24px;
+      color: #00ffff;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px #00ffff;
+      letter-spacing: 2px;
+    }
+
+    .practice-instructions {
+      color: #ff00ff;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .practice-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .practice-stat {
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 6px;
+      padding: 15px;
+    }
+
+    .practice-stat-label {
+      font-size: 12px;
+      color: rgba(0, 255, 255, 0.6);
+      margin-bottom: 5px;
+    }
+
+    .practice-stat-value {
+      font-size: 24px;
+      color: #00ffff;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <!-- Username Modal -->
-  <div id="username-modal">
-    <div class="modal-content">
-      <div class="modal-title">POLY RACE</div>
-      <div class="modal-subtitle">ENTER YOUR NAME</div>
-      <input type="text" id="username-input" placeholder="Your Username" maxlength="15" autocomplete="off">
-      <button id="username-submit">START RACING</button>
+  <!-- Main Menu -->
+  <div id="main-menu">
+    <div class="menu-content">
+      <div class="menu-title">POLY RACE</div>
+      <div class="menu-subtitle">MULTIPLAYER KEYBOARD RACING</div>
+      
+      <div class="menu-buttons">
+        <button class="menu-btn" id="create-room-btn">CREATE ROOM</button>
+        <button class="menu-btn" id="join-room-btn">JOIN ROOM</button>
+        <button class="menu-btn secondary" id="random-match-btn">RANDOM MATCH</button>
+        <button class="menu-btn secondary" id="practice-btn">PRACTICE MODE</button>
+      </div>
+      
+      <div class="player-info">
+        <div class="player-info-label">PLAYER NAME</div>
+        <div class="player-info-value" id="player-name-display">Racer #---</div>
+        <div class="player-info-edit">
+          <input type="text" class="player-info-input" id="player-name-input" placeholder="Enter custom name" maxlength="15">
+          <button class="player-info-btn" id="player-name-submit">UPDATE</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -379,6 +506,29 @@
     <button class="room-btn secondary" id="leave-room-btn">LEAVE ROOM</button>
   </div>
 
+  <!-- Practice Mode UI -->
+  <div id="practice-mode-ui">
+    <div class="practice-title">PRACTICE MODE</div>
+    <div class="practice-instructions">
+      Press the highlighted keys to move forward!<br>
+      Try to reach the finish line as fast as possible.
+    </div>
+    
+    <div class="practice-stats">
+      <div class="practice-stat">
+        <div class="practice-stat-label">BEST TIME</div>
+        <div class="practice-stat-value" id="practice-best-time">--.--s</div>
+      </div>
+      <div class="practice-stat">
+        <div class="practice-stat-label">BEST SCORE</div>
+        <div class="practice-stat-value" id="practice-best-score">---</div>
+      </div>
+    </div>
+    
+    <button class="room-btn" id="practice-start-btn">START PRACTICE</button>
+    <button class="room-btn secondary" id="practice-back-btn">BACK TO MENU</button>
+  </div>
+
   <canvas id="game-canvas"></canvas>
 
   <script>
@@ -389,7 +539,11 @@
     let myPlayerId = null;
     let myPlayerName = null;
     let currentRoom = null;
-    let gameState = 'menu'; // menu, waiting, countdown, playing, finished
+    let gameState = 'menu'; // menu, waiting, countdown, playing, finished, practice
+
+    // Practice mode stats
+    let practiceBestTime = localStorage.getItem('practiceBestTime') || null;
+    let practiceBestScore = localStorage.getItem('practiceBestScore') || 0;
 
     // Connect to server
     function initSocket() {
@@ -399,6 +553,17 @@
       socket.on('connect', () => {
         console.log('Connected to server:', socket.id);
         updateConnectionStatus('connected');
+        
+        // Auto-generate a player name if not set
+        if (!myPlayerId) {
+          const randomId = Math.floor(Math.random() * 10000);
+          myPlayerId = socket.id;
+          myPlayerName = `Racer #${randomId}`;
+          updatePlayerNameDisplay();
+          
+          // Register with the generated name
+          socket.emit('player:register', { name: myPlayerName });
+        }
       });
 
       socket.on('disconnect', () => {
@@ -415,19 +580,21 @@
       socket.on('player:registered', (data) => {
         myPlayerId = data.playerId;
         myPlayerName = data.playerData.name;
-        document.getElementById('hud-player-name').textContent = myPlayerName;
+        updatePlayerNameDisplay();
         console.log('Registered as:', myPlayerName);
       });
 
       // Room created
       socket.on('room:created', (data) => {
         currentRoom = data.room;
+        hideMainMenu();
         showRoomUI(data.room);
       });
 
       // Room joined
       socket.on('room:joined', (data) => {
         currentRoom = data.room;
+        hideMainMenu();
         showRoomUI(data.room);
       });
 
@@ -440,6 +607,7 @@
       // Match found
       socket.on('match:found', (data) => {
         currentRoom = data.room;
+        hideMainMenu();
         showRoomUI(data.room);
       });
 
@@ -483,7 +651,7 @@
     }
 
     // =======================================
-    // USERNAME & CONNECTION UI
+    // MAIN MENU UI
     // =======================================
     function updateConnectionStatus(status) {
       const dot = document.querySelector('.status-dot');
@@ -500,35 +668,256 @@
       text.textContent = messages[status] || 'Unknown';
     }
 
-    document.getElementById('username-submit').addEventListener('click', () => {
-      const input = document.getElementById('username-input');
-      const username = input.value.trim();
+    function updatePlayerNameDisplay() {
+      document.getElementById('player-name-display').textContent = myPlayerName;
+      document.getElementById('hud-player-name').textContent = myPlayerName;
+    }
 
-      if (username.length < 2) {
-        showNotification('Username must be at least 2 characters', '#ff0000');
-        return;
-      }
+    function hideMainMenu() {
+      document.getElementById('main-menu').classList.add('hidden');
+    }
 
+    function showMainMenu() {
+      document.getElementById('main-menu').classList.remove('hidden');
+    }
+
+    // Menu button handlers
+    document.getElementById('create-room-btn').addEventListener('click', () => {
       if (!socket || !socket.connected) {
         showNotification('Not connected to server', '#ff0000');
         return;
       }
-
-      // Register player
-      socket.emit('player:register', { name: username });
-
-      // Hide modal
-      document.getElementById('username-modal').classList.add('hidden');
-
-      // Show main menu
-      showMainMenu();
+      socket.emit('room:create');
     });
 
-    // Allow Enter key to submit
-    document.getElementById('username-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('username-submit').click();
+    document.getElementById('join-room-btn').addEventListener('click', () => {
+      if (!socket || !socket.connected) {
+        showNotification('Not connected to server', '#ff0000');
+        return;
       }
+      const code = prompt('Enter room code:');
+      if (code) {
+        socket.emit('room:join', { roomCode: code.toUpperCase() });
+      }
+    });
+
+    document.getElementById('random-match-btn').addEventListener('click', () => {
+      if (!socket || !socket.connected) {
+        showNotification('Not connected to server', '#ff0000');
+        return;
+      }
+      socket.emit('match:random');
+      showNotification('Searching for opponent...', '#ff00ff');
+    });
+
+    document.getElementById('practice-btn').addEventListener('click', () => {
+      showPracticeModeUI();
+    });
+
+    // Player name update
+    document.getElementById('player-name-submit').addEventListener('click', () => {
+      const input = document.getElementById('player-name-input');
+      const newName = input.value.trim();
+      
+      if (newName.length < 2) {
+        showNotification('Name must be at least 2 characters', '#ff0000');
+        return;
+      }
+      
+      myPlayerName = newName;
+      updatePlayerNameDisplay();
+      input.value = '';
+      
+      // Update on server if connected
+      if (socket && socket.connected) {
+        socket.emit('player:update-name', { name: newName });
+      }
+      
+      showNotification('Name updated!', '#00ff88');
+    });
+
+    // Allow Enter key to submit name
+    document.getElementById('player-name-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('player-name-submit').click();
+      }
+    });
+
+    // =======================================
+    // PRACTICE MODE
+    // =======================================
+    function showPracticeModeUI() {
+      hideMainMenu();
+      document.getElementById('practice-mode-ui').classList.add('visible');
+      
+      // Update practice stats
+      document.getElementById('practice-best-time').textContent = 
+        practiceBestTime ? `${practiceBestTime}s` : '--.--s';
+      document.getElementById('practice-best-score').textContent = practiceBestScore;
+    }
+
+    function hidePracticeModeUI() {
+      document.getElementById('practice-mode-ui').classList.remove('visible');
+    }
+
+    function startPracticeMode() {
+      gameState = 'practice';
+      hidePracticeModeUI();
+      
+      // Reset game state
+      resizeCanvas();
+      myPosition = canvas.width * 0.1;
+      myProgress = 0;
+      myScore = 0;
+      myCombo = 0;
+      myNextKey = getRandomKey();
+      raceStartTime = Date.now();
+
+      // Start game loop
+      practiceGameLoop();
+
+      // Add keyboard listener
+      document.addEventListener('keydown', handlePracticeKeyPress);
+    }
+
+    function handlePracticeKeyPress(e) {
+      if (gameState !== 'practice') return;
+
+      const key = e.key.toLowerCase();
+
+      if (key === myNextKey) {
+        // Correct key!
+        myPosition += canvas.width * 0.05; // Move forward
+        myScore += 10;
+        myCombo++;
+        myNextKey = getRandomKey();
+
+        // Calculate progress (0 to 1)
+        const startX = canvas.width * 0.1;
+        const finishX = canvas.width * FINISH_LINE;
+        myProgress = Math.min(1, (myPosition - startX) / (finishX - startX));
+
+        // Check if finished
+        if (myProgress >= 1) {
+          finishPracticeRace();
+        }
+      } else if (KEYS.includes(key)) {
+        // Wrong key
+        myCombo = 0;
+      }
+    }
+
+    function finishPracticeRace() {
+      gameState = 'finished';
+      const raceTime = ((Date.now() - raceStartTime) / 1000).toFixed(2);
+
+      // Update best stats
+      if (!practiceBestTime || parseFloat(raceTime) < parseFloat(practiceBestTime)) {
+        practiceBestTime = raceTime;
+        localStorage.setItem('practiceBestTime', practiceBestTime);
+      }
+      
+      if (myScore > practiceBestScore) {
+        practiceBestScore = myScore;
+        localStorage.setItem('practiceBestScore', practiceBestScore);
+      }
+
+      document.removeEventListener('keydown', handlePracticeKeyPress);
+      
+      // Show practice results
+      showPracticeResults(raceTime);
+    }
+
+    function practiceGameLoop() {
+      if (gameState !== 'practice') {
+        cancelAnimationFrame(animationFrame);
+        return;
+      }
+
+      // Clear canvas
+      ctx.fillStyle = '#020208';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw grid background
+      drawGrid();
+
+      // Draw finish line
+      drawFinishLine();
+
+      // Draw my runner
+      drawRunner(myPosition, canvas.height * 0.5, '#00ffff', myPlayerName, myNextKey, true);
+
+      // Draw practice HUD
+      drawPracticeHUD();
+
+      animationFrame = requestAnimationFrame(practiceGameLoop);
+    }
+
+    function drawPracticeHUD() {
+      ctx.save();
+      ctx.font = 'bold 18px Orbitron';
+      ctx.textAlign = 'left';
+
+      // My stats (left side)
+      ctx.fillStyle = '#00ffff';
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 15;
+      ctx.fillText(`Score: ${myScore}`, 20, canvas.height - 60);
+      ctx.fillText(`Combo: x${myCombo}`, 20, canvas.height - 30);
+
+      // Time (right side)
+      ctx.textAlign = 'right';
+      const currentTime = ((Date.now() - raceStartTime) / 1000).toFixed(2);
+      ctx.fillText(`Time: ${currentTime}s`, canvas.width - 20, canvas.height - 60);
+      
+      // Best time
+      if (practiceBestTime) {
+        ctx.fillText(`Best: ${practiceBestTime}s`, canvas.width - 20, canvas.height - 30);
+      }
+
+      ctx.restore();
+    }
+
+    function showPracticeResults(time) {
+      cancelAnimationFrame(animationFrame);
+
+      // Draw results overlay
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = 'bold 60px Orbitron';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 50;
+      ctx.fillText('FINISHED!', canvas.width / 2, canvas.height / 2 - 80);
+
+      ctx.font = 'bold 30px Orbitron';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 20;
+      ctx.fillText(`Time: ${time}s`, canvas.width / 2, canvas.height / 2 - 20);
+      ctx.fillText(`Score: ${myScore}`, canvas.width / 2, canvas.height / 2 + 20);
+
+      ctx.font = '20px Orbitron';
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText('Returning to practice menu in 5 seconds...', canvas.width / 2, canvas.height / 2 + 80);
+      ctx.restore();
+
+      setTimeout(() => {
+        gameState = 'menu';
+        showPracticeModeUI();
+      }, 5000);
+    }
+
+    // Practice mode controls
+    document.getElementById('practice-start-btn').addEventListener('click', () => {
+      startPracticeMode();
+    });
+
+    document.getElementById('practice-back-btn').addEventListener('click', () => {
+      hidePracticeModeUI();
+      showMainMenu();
     });
 
     // =======================================
@@ -609,31 +998,6 @@
         setTimeout(() => notif.remove(), 300);
       }, 3000);
     }
-
-    // =======================================
-    // MAIN MENU (Simple for now)
-    // =======================================
-    function showMainMenu() {
-      // For now, just show notification to use keyboard shortcuts
-      showNotification('Press C to create room, J to join, R for random match', '#00ffff');
-    }
-
-    // Keyboard shortcuts for menu
-    document.addEventListener('keypress', (e) => {
-      if (gameState === 'menu') {
-        if (e.key.toLowerCase() === 'c') {
-          socket.emit('room:create');
-        } else if (e.key.toLowerCase() === 'j') {
-          const code = prompt('Enter room code:');
-          if (code) {
-            socket.emit('room:join', { roomCode: code.toUpperCase() });
-          }
-        } else if (e.key.toLowerCase() === 'r') {
-          socket.emit('match:random');
-          showNotification('Searching for opponent...', '#ff00ff');
-        }
-      }
-    });
 
     // =======================================
     // GAME ENGINE
@@ -962,7 +1326,6 @@
     // =======================================
     window.addEventListener('load', () => {
       initSocket();
-      document.getElementById('username-input').focus();
     });
   </script>
 </body>
