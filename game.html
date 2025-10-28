@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>POLY RACE - Type. Race. Win.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* POLY RACE - Minimalistic Neon Game Theme */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --cyan: #00ffff;
+      --magenta: #ff00ff;
+      --gold: #FFD700;
+      --void: #000000;
+      --dark: #0a0a0f;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: radial-gradient(ellipse at center, #0a0a0f 0%, #000000 100%);
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+    }
+
+    /* Fade-in animation */
+    body {
+      animation: fadeIn 0.8s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Loading overlay */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      opacity: 1;
+      pointer-events: none;
+      z-index: 9999;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #loading-overlay.fade-out {
+      opacity: 0;
+    }
+
+    /* Canvas container */
+    #game-canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      background: transparent;
+    }
+
+    /* Game HUD Overlay */
+    #game-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Title Card (for menu state) */
+    #title-card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 200;
+    }
+
+    .game-title {
+      font-size: 6rem;
+      font-weight: 900;
+      letter-spacing: 15px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow:
+        0 0 40px var(--cyan),
+        0 0 80px var(--cyan),
+        0 0 120px rgba(0, 255, 255, 0.3);
+      margin-bottom: 1rem;
+      line-height: 0.9;
+    }
+
+    .game-subtitle {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 6px;
+      font-weight: 400;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .game-instruction {
+      font-size: 0.9rem;
+      color: rgba(0, 255, 255, 0.8);
+      letter-spacing: 3px;
+      font-weight: 600;
+      text-shadow: 0 0 20px var(--cyan);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    /* Game Stats HUD */
+    #stats-hud {
+      position: absolute;
+      top: 30px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      pointer-events: none;
+    }
+
+    .stat-display {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 2px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 0 15px currentColor;
+    }
+
+    .stat-value.cyan {
+      color: var(--cyan);
+    }
+
+    .stat-value.magenta {
+      color: var(--magenta);
+    }
+
+    .stat-value.gold {
+      color: var(--gold);
+    }
+
+    /* Key Indicators */
+    #key-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 60px;
+      pointer-events: none;
+    }
+
+    .player-keys {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .player-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-shadow: 0 0 15px currentColor;
+      opacity: 0.8;
+    }
+
+    .key-display {
+      font-size: 2.5rem;
+      font-weight: 800;
+      padding: 20px 30px;
+      border: 3px solid;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      min-width: 80px;
+      text-align: center;
+      box-shadow: 0 0 30px currentColor;
+      transition: all 0.15s ease;
+      letter-spacing: 2px;
+    }
+
+    .key-display.pressed {
+      transform: scale(1.15);
+      box-shadow: 0 0 50px currentColor;
+      background: rgba(0, 0, 0, 0.95);
+    }
+
+    /* Win Screen */
+    #win-screen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    #win-screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .win-title {
+      font-size: 5rem;
+      font-weight: 900;
+      letter-spacing: 12px;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 60px currentColor;
+    }
+
+    .win-stats {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 3px;
+      margin: 0.5rem 0;
+    }
+
+    .win-restart {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: var(--cyan);
+      letter-spacing: 3px;
+      text-shadow: 0 0 20px var(--cyan);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Countdown */
+    #countdown-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10rem;
+      font-weight: 900;
+      color: #00ffff;
+      text-shadow:
+        0 0 40px #00ffff,
+        0 0 80px #00ffff,
+        0 0 120px rgba(0, 255, 255, 0.5);
+      z-index: 2500;
+      opacity: 0;
+      pointer-events: none;
+      letter-spacing: 8px;
+    }
+
+    #countdown-display.active {
+      animation: countdownPulse 1s ease-in-out;
+    }
+
+    @keyframes countdownPulse {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+      }
+      40% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.3);
+      }
+      70% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.5);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .game-title {
+        font-size: 3rem;
+        letter-spacing: 8px;
+      }
+
+      .game-subtitle {
+        font-size: 0.9rem;
+        letter-spacing: 4px;
+      }
+
+      #key-indicator {
+        gap: 30px;
+        bottom: 20px;
+      }
+
+      .key-display {
+        font-size: 1.8rem;
+        padding: 15px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-overlay"></div>
+
+  <!-- Back Button -->
+  <a href="modes.html" id="back-btn" style="position: fixed; top: 30px; left: 30px; padding: 14px 28px; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 3px; color: #00ffff; background: rgba(0, 0, 0, 0.8); border: 2px solid #00ffff; text-decoration: none; z-index: 500; transition: all 0.3s ease; backdrop-filter: blur(10px); text-shadow: 0 0 10px #00ffff; display: flex; align-items: center; gap: 8px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    BACK
+  </a>
+  <style>
+    #back-btn:hover {
+      background: rgba(0, 255, 255, 0.15);
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+      transform: translateX(-8px);
+      border-color: #fff;
+      color: #fff;
+    }
+    #back-btn:hover svg {
+      transform: translateX(-4px);
+    }
+  </style>
+
+  <canvas id="game-canvas"></canvas>
+
+  <div id="game-hud">
+    <!-- Title Card (shown in menu state) -->
+    <div id="title-card" style="display: none;">
+      <h1 class="game-title">POLY RACE</h1>
+      <p class="game-subtitle">Type. Race. Win.</p>
+      <p class="game-instruction">PRESS SPACE TO START</p>
+    </div>
+
+    <!-- Stats HUD (shown during gameplay) -->
+    <div id="stats-hud" style="display: none;">
+      <div class="stat-display">
+        <div class="stat-label">TIME</div>
+        <div class="stat-value cyan" id="time-display">0.0s</div>
+      </div>
+    </div>
+
+    <!-- Countdown Display -->
+    <div id="countdown-display" style="display: none;"></div>
+
+    <!-- Key Indicators (shown during gameplay) -->
+    <div id="key-indicator" style="display: none;"></div>
+
+    <!-- Win Screen -->
+    <div id="win-screen">
+      <h2 class="win-title" id="win-title">PLAYER 1 WINS!</h2>
+      <p class="win-stats" id="win-time">Time: 0.0s</p>
+      <p class="win-stats" id="win-score">Score: 0</p>
+      <p class="win-stats" id="win-combo">Max Combo: 0</p>
+      <p class="win-restart">PRESS SPACE TO RESTART</p>
+    </div>
+  </div>
+
+  <script>
+// Fade in effect on page load
+window.addEventListener('load', () => {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    setTimeout(() => {
+      overlay.classList.add('fade-out');
+      setTimeout(() => {
+        overlay.remove();
+      }, 800);
+    }, 100);
+  }
+});
+
+// ============================================
+// Utility
+// ============================================
+const Util = {
+  timeStamp() { return window.performance.now(); },
+  random(min, max) { return min + Math.random() * (max - min); },
+  map(a,b,c,d,e){ return (a-b)/(c-b)*(e-d)+d; },
+  lerp(a,b,t){ return a + (b-a)*t; },
+  linearTween(t,b,c,d){ return c*t/d + b; },
+  easeInOutQuad(t,b,c,d){ t/=d/2; if(t<1)return c/2*t*t+b; t--; return -c/2*(t*(t-2)-1)+b; }
+};
+
+// ============================================
+// Vector
+// ============================================
+class Vector {
+  constructor(x=0,y=0){ this.x=x; this.y=y; }
+  set(x,y){ this.x=x; this.y=y; }
+  add(v){ this.x+=v.x; this.y+=v.y; }
+  mult(s){ this.x*=s; this.y*=s; }
+  copy(){ return new Vector(this.x,this.y); }
+  mag(){ return Math.hypot(this.x,this.y); }
+}
+
+// ============================================
+// Scene base
+// ============================================
+class Scene {
+  constructor(name){ this.name=name; this.loop=true; this.init_once=false; }
+  giveWorld(world){ this.world=world; this.ctx=world.ctx; }
+  keyEvents(e){} init(){} render(){}
+}
+
+// ============================================
+// Physics + Entity base
+// ============================================
+class Body {
+  constructor(entity,x,y){
+    this.world = entity.world;
+    this.step = this.world.FPS.step;
+    this.position = new Vector(x,y);
+    this.velocity = new Vector(0,0);
+    this.acceleration = new Vector(0,0);
+    this.drag = 0.88;
+  }
+  applyForce(v){ this.acceleration.add(v); }
+  integrate(){
+    this.velocity.add(this.acceleration);
+    this.velocity.mult(this.drag);
+    const v = this.velocity.copy(); v.mult(this.step);
+    this.position.add(v);
+    this.acceleration.set(0,0);
+  }
+}
+
+class Entity {
+  constructor(scene,x,y){
+    this.scene=scene; this.world=scene.world; this.ctx=this.world.ctx;
+    this.body=new Body(this,x,y);
+  }
+  update(){} draw(){} render(){ this.update(); this.draw(); }
+}
+
+// ============================================
+// Particle System
+// ============================================
+class Particle {
+  constructor(x, y, color, vx, vy) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.vx = vx;
+    this.vy = vy;
+    this.life = 1;
+    this.size = Util.random(2, 6);
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.2;
+    this.life -= 0.02;
+  }
+  draw(ctx) {
+    if (this.life <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = this.life;
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 15;
+    ctx.fillRect(this.x, this.y, this.size, this.size);
+    ctx.restore();
+  }
+}
+
+// ============================================
+// Runner (player) with detailed poly style
+// ============================================
+class Runner extends Entity {
+  constructor(scene,x,y,color,keySet,scale=1.5,playerNum=1){
+    super(scene,x,y);
+    this.color=color;
+    this.keySet=keySet;
+    this.scale=scale;
+    this.playerNum=playerNum;
+    this.nextKey=this.getNewKey();
+    this.keyPressed=false;
+    this.lastKey=null;
+    this.startX=x;
+    this.popAlpha=0;
+    this.score=0;
+    this.combo=0;
+    this.maxCombo=0;
+    this.wrongKeyPenalty=0;
+    this.particles = [];
+    this.lastKeyTime=0;
+    this.keySpeed=0;
+    this.progressPercent=0;
+    this.animTime=0;
+
+    // Word mode tracking
+    this.wordProgress=0;
+    this.isWordMode = this.keySet.length > 10;
+
+    // Champion status
+    this.hasChampionStatus = false;
+  }
+
+  getNewKey(){
+    let newKey;
+    do {
+      const randomIndex=Math.floor(Util.random(0,this.keySet.length));
+      newKey = this.keySet[randomIndex];
+    } while(newKey === this.lastKey && this.keySet.length > 1);
+    return newKey;
+  }
+
+  checkKeyPress(){
+    const keys=this.world.keys;
+    const now = Date.now();
+
+    if(this.isWordMode){
+      const currentChar = this.nextKey[this.wordProgress];
+
+      if(keys[currentChar] && !this.keyPressed){
+        this.keyPressed=true;
+        this.lastKey=currentChar;
+
+        const timeSinceLastKey = now - this.lastKeyTime;
+        this.keySpeed = timeSinceLastKey;
+        this.lastKeyTime = now;
+
+        let forceMultiplier = 1;
+        if(timeSinceLastKey < 300) forceMultiplier = 1.3;
+        else if(timeSinceLastKey < 500) forceMultiplier = 1.15;
+
+        this.body.applyForce(new Vector(38 * forceMultiplier, 0));
+        this.popAlpha=1;
+        this.score+=10;
+        this.combo++;
+        if(this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+        this.spawnParticles(12);
+        this.playBeep(440 + this.combo * 50);
+
+        this.wordProgress++;
+
+        if(this.wordProgress >= this.nextKey.length){
+          this.wordProgress = 0;
+        }
+      }
+
+      if(!this.keyPressed && this.scene.STATE==="running"){
+        for(let i = 97; i <= 122; i++){
+          const char = String.fromCharCode(i);
+          if(keys[char] && char !== currentChar){
+            this.wrongKeyPenalty = 10;
+            this.combo = 0;
+            this.playBeep(200);
+            break;
+          }
+        }
+      }
+
+      if(this.keyPressed && !keys[this.lastKey]){
+        this.keyPressed=false;
+        if(this.wordProgress === 0){
+          this.nextKey=this.getNewKey();
+        }
+      }
+    } else {
+      if(keys[this.nextKey] && !this.keyPressed){
+        this.keyPressed=true;
+        this.lastKey=this.nextKey;
+
+        const timeSinceLastKey = now - this.lastKeyTime;
+        this.keySpeed = timeSinceLastKey;
+        this.lastKeyTime = now;
+
+        let forceMultiplier = 1;
+        if(timeSinceLastKey < 300) forceMultiplier = 1.3;
+        else if(timeSinceLastKey < 500) forceMultiplier = 1.15;
+
+        this.body.applyForce(new Vector(38 * forceMultiplier, 0));
+        this.popAlpha=1;
+        this.score+=10;
+        this.combo++;
+        if(this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+        this.spawnParticles(12);
+        this.playBeep(440 + this.combo * 50);
+      }
+
+      if(!this.keyPressed && this.scene.STATE==="running"){
+        for(let key of this.keySet){
+          if(keys[key] && key !== this.nextKey){
+            this.wrongKeyPenalty = 10;
+            this.combo = 0;
+            this.playBeep(200);
+            break;
+          }
+        }
+      }
+
+      if(this.keyPressed && !keys[this.lastKey]){
+        this.keyPressed=false;
+        this.nextKey=this.getNewKey();
+      }
+    }
+  }
+
+  playBeep(freq) {
+    if(!this.world.audioCtx) return;
+    const osc = this.world.audioCtx.createOscillator();
+    const gain = this.world.audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(this.world.audioCtx.destination);
+    osc.frequency.value = freq;
+    gain.gain.value = 0.1;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.01, this.world.audioCtx.currentTime + 0.1);
+    osc.stop(this.world.audioCtx.currentTime + 0.1);
+  }
+
+  spawnParticles(count) {
+    for(let i = 0; i < count; i++) {
+      const angle = Util.random(0, Math.PI * 2);
+      const speed = Util.random(2, 8);
+      this.particles.push(new Particle(
+        this.body.position.x,
+        this.body.position.y,
+        this.color,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed - 3
+      ));
+    }
+  }
+
+  checkWin(){
+    const progress = this.body.position.x - this.startX;
+    const target = this.scene.raceDistancePixels;
+    this.progressPercent = Math.min(100, (progress / target) * 100);
+
+    if(progress >= target){
+      this.scene.STATE="win";
+      this.scene.winner=this.scene.players.indexOf(this);
+      this.scene.winnerStats = {
+        score: this.score,
+        maxCombo: this.maxCombo
+      };
+    }
+  }
+
+  update(){
+    this.body.integrate();
+    if(this.popAlpha>0) this.popAlpha-=0.05;
+    if(this.wrongKeyPenalty>0) this.wrongKeyPenalty-=0.3;
+    if(this.body.velocity.x > 0.5) this.animTime += 0.15;
+
+    this.particles = this.particles.filter(p => p.life > 0);
+    this.particles.forEach(p => p.update());
+  }
+
+  poly(points, fill, stroke = null, lineWidth = 0) {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    }
+  }
+
+  drawDetailedRunner(x, y, phase) {
+    const ctx = this.ctx;
+    const isAirborne = phase > 0.36 && phase < 0.86;
+    const airLift = isAirborne ? Math.sin((phase - 0.36) / 0.5 * Math.PI) * 8 : 0;
+
+    const legSwing = Math.sin(phase * Math.PI * 2) * 35;
+    const legOpp = Math.sin(phase * Math.PI * 2 + Math.PI) * 35;
+
+    const armSwing = Math.sin(phase * Math.PI * 2 + Math.PI) * 40;
+    const armOpp = Math.sin(phase * Math.PI * 2) * 40;
+
+    const lean = 18;
+    const bob = Math.sin(phase * Math.PI * 2) * 3;
+
+    const S = this.scale;
+    y = y + bob - airLift;
+
+    const torsoW = 24 * S;
+    const torsoH = 42 * S;
+    const headW = 20 * S;
+    const headH = 24 * S;
+
+    const torsoTop = y - torsoH - 12;
+    const torsoBot = y - 12;
+
+    const main = this.color;
+    const light = this.lightenColor(this.color, 30);
+    const dark = this.darkenColor(this.color, 30);
+    const shade = this.darkenColor(this.color, 50);
+
+    // Champion cape (drawn behind everything)
+    if(this.hasChampionStatus){
+      this.drawCape(ctx, x + lean, torsoTop + 8, phase, S);
+    }
+
+    // Draw back limbs
+    this.drawLeg(ctx, x, torsoBot, legOpp - 10, -8, dark, shade, true, S);
+    this.drawArm(ctx, x + lean, torsoTop + 14, armOpp - 35, -14, dark, shade, true, S);
+
+    // Torso
+    this.poly([
+      {x: x - torsoW/2 + lean, y: torsoTop},
+      {x: x + torsoW/2 + lean, y: torsoTop},
+      {x: x + torsoW/2 - 2, y: torsoBot},
+      {x: x - torsoW/2 - 2, y: torsoBot}
+    ], main);
+
+    this.poly([
+      {x: x + torsoW/2 + lean, y: torsoTop},
+      {x: x + torsoW/2 + lean + 10, y: torsoTop + 6},
+      {x: x + torsoW/2 + 8, y: torsoBot + 6},
+      {x: x + torsoW/2 - 2, y: torsoBot}
+    ], dark);
+
+    // Head
+    const headX = x + lean + 10;
+    const headY = torsoTop - headH - 2;
+
+    this.poly([
+      {x: headX - headW/2, y: headY + 4},
+      {x: headX + headW/2, y: headY},
+      {x: headX + headW/2 + 2, y: headY + headH - 4},
+      {x: headX, y: headY + headH},
+      {x: headX - headW/2 - 2, y: headY + headH - 4}
+    ], light);
+
+    this.poly([
+      {x: headX + headW/2, y: headY},
+      {x: headX + headW/2 + 12, y: headY + 4},
+      {x: headX + headW/2 + 10, y: headY + headH - 2},
+      {x: headX + headW/2 + 2, y: headY + headH - 4}
+    ], dark);
+
+    this.poly([
+      {x: headX - headW/2, y: headY + 4},
+      {x: headX + headW/2, y: headY},
+      {x: headX + headW/2 + 12, y: headY + 4},
+      {x: headX, y: headY + 8}
+    ], main);
+
+    // Draw front limbs
+    this.drawLeg(ctx, x, torsoBot, legSwing + 10, 8, main, dark, false, S);
+    this.drawArm(ctx, x + lean, torsoTop + 14, armSwing + 20, -10, main, dark, false, S);
+
+    // Champion crown (drawn on top)
+    if(this.hasChampionStatus){
+      this.drawCrown(ctx, headX, headY - 12, S);
+    }
+  }
+
+  drawCape(ctx, x, y, phase, S) {
+    const capeFlow = Math.sin(phase * Math.PI * 2) * 15 - 20;
+    const capeColor = "#ffaa00";
+    const capeShadow = this.darkenColor(capeColor, 40);
+
+    ctx.globalAlpha = 0.7;
+
+    this.poly([
+      {x: x - 8, y: y},
+      {x: x + 8, y: y},
+      {x: x + 12 + capeFlow, y: y + 50 * S},
+      {x: x - 12 + capeFlow, y: y + 50 * S}
+    ], capeColor);
+
+    this.poly([
+      {x: x + 8, y: y},
+      {x: x + 8 + capeFlow/2, y: y + 25 * S},
+      {x: x + 12 + capeFlow, y: y + 50 * S},
+      {x: x, y: y + 45 * S}
+    ], capeShadow);
+
+    ctx.globalAlpha = 1.0;
+  }
+
+  drawCrown(ctx, x, y, S) {
+    const crownColor = "#ffdd00";
+    const crownShadow = this.darkenColor(crownColor, 30);
+
+    ctx.shadowColor = crownColor;
+    ctx.shadowBlur = 15;
+
+    this.poly([
+      {x: x - 12 * S, y: y + 10},
+      {x: x + 12 * S, y: y + 10},
+      {x: x + 10 * S, y: y},
+      {x: x - 10 * S, y: y}
+    ], crownColor);
+
+    this.poly([
+      {x: x - 10 * S, y: y},
+      {x: x - 6 * S, y: y - 8},
+      {x: x - 2 * S, y: y + 2}
+    ], crownColor);
+
+    this.poly([
+      {x: x - 2 * S, y: y + 2},
+      {x: x, y: y - 12},
+      {x: x + 2 * S, y: y + 2}
+    ], crownShadow);
+
+    this.poly([
+      {x: x + 2 * S, y: y + 2},
+      {x: x + 6 * S, y: y - 8},
+      {x: x + 10 * S, y: y}
+    ], crownColor);
+
+    ctx.shadowBlur = 0;
+  }
+
+  drawLeg(ctx, x, hipY, angle, offsetX, color1, color2, isBack, S) {
+    const a = angle * Math.PI / 180;
+    const thighLen = 30 * S;
+    const shinLen = 30 * S;
+
+    const hipX = x + offsetX;
+    const kneeX = hipX + Math.sin(a) * thighLen;
+    const kneeY = hipY + Math.cos(a) * thighLen;
+
+    const shinA = a - 0.6;
+    const ankleX = kneeX + Math.sin(shinA) * shinLen;
+    const ankleY = kneeY + Math.cos(shinA) * shinLen;
+
+    const legW = 11;
+    const kneeW = 13;
+
+    if (isBack) ctx.globalAlpha = 0.4;
+
+    // Thigh
+    const thighAngle = Math.atan2(kneeX - hipX, kneeY - hipY);
+    const thighPerpX = Math.cos(thighAngle) * legW/2;
+    const thighPerpY = -Math.sin(thighAngle) * legW/2;
+
+    this.poly([
+      {x: hipX - thighPerpX, y: hipY - thighPerpY},
+      {x: hipX + thighPerpX, y: hipY + thighPerpY},
+      {x: kneeX + thighPerpX, y: kneeY + thighPerpY},
+      {x: kneeX - thighPerpX, y: kneeY - thighPerpY}
+    ], color1);
+
+    // Knee joint
+    const kneePts = [];
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2;
+      kneePts.push({
+        x: kneeX + Math.cos(ang) * kneeW/2,
+        y: kneeY + Math.sin(ang) * kneeW/2
+      });
+    }
+    this.poly(kneePts, this.lightenColor(this.color, 20));
+
+    // Shin
+    const shinAngle = Math.atan2(ankleX - kneeX, ankleY - kneeY);
+    const shinPerpX = Math.cos(shinAngle) * (legW-2)/2;
+    const shinPerpY = -Math.sin(shinAngle) * (legW-2)/2;
+
+    this.poly([
+      {x: kneeX - shinPerpX, y: kneeY - shinPerpY},
+      {x: kneeX + shinPerpX, y: kneeY + shinPerpY},
+      {x: ankleX + shinPerpX, y: ankleY + shinPerpY},
+      {x: ankleX - shinPerpX, y: ankleY - shinPerpY}
+    ], color2);
+
+    // Foot
+    this.poly([
+      {x: ankleX - 8, y: ankleY},
+      {x: ankleX + 18, y: ankleY},
+      {x: ankleX + 20, y: ankleY + 10},
+      {x: ankleX - 6, y: ankleY + 10}
+    ], this.darkenColor(this.color, 60));
+
+    if (isBack) ctx.globalAlpha = 1.0;
+  }
+
+  drawArm(ctx, shoulderX, shoulderY, angle, offsetX, color1, color2, isBack, S) {
+    const a = angle * Math.PI / 180;
+    const upperLen = 24 * S;
+    const lowerLen = 22 * S;
+
+    shoulderX = shoulderX + offsetX;
+    const elbowX = shoulderX + Math.sin(a) * upperLen;
+    const elbowY = shoulderY + Math.cos(a) * upperLen;
+
+    const foreA = a + 0.8;
+    const handX = elbowX + Math.sin(foreA) * lowerLen;
+    const handY = elbowY + Math.cos(foreA) * lowerLen;
+
+    const armW = 9;
+    const elbowW = 11;
+
+    if (isBack) ctx.globalAlpha = 0.4;
+
+    // Upper arm
+    const upperAngle = Math.atan2(elbowX - shoulderX, elbowY - shoulderY);
+    const upperPerpX = Math.cos(upperAngle) * armW/2;
+    const upperPerpY = -Math.sin(upperAngle) * armW/2;
+
+    this.poly([
+      {x: shoulderX - upperPerpX, y: shoulderY - upperPerpY},
+      {x: shoulderX + upperPerpX, y: shoulderY + upperPerpY},
+      {x: elbowX + upperPerpX, y: elbowY + upperPerpY},
+      {x: elbowX - upperPerpX, y: elbowY - upperPerpY}
+    ], color1);
+
+    // Elbow joint
+    const elbowPts = [];
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2;
+      elbowPts.push({
+        x: elbowX + Math.cos(ang) * elbowW/2,
+        y: elbowY + Math.sin(ang) * elbowW/2
+      });
+    }
+    this.poly(elbowPts, this.lightenColor(this.color, 20));
+
+    // Forearm
+    const foreAngle = Math.atan2(handX - elbowX, handY - elbowY);
+    const forePerpX = Math.cos(foreAngle) * (armW-2)/2;
+    const forePerpY = -Math.sin(foreAngle) * (armW-2)/2;
+
+    this.poly([
+      {x: elbowX - forePerpX, y: elbowY - forePerpY},
+      {x: elbowX + forePerpX, y: elbowY + forePerpY},
+      {x: handX + forePerpX, y: handY + forePerpY},
+      {x: handX - forePerpX, y: handY - forePerpY}
+    ], color2);
+
+    // Hand
+    this.poly([
+      {x: handX - 7, y: handY},
+      {x: handX + 7, y: handY},
+      {x: handX + 9, y: handY + 7},
+      {x: handX, y: handY + 11},
+      {x: handX - 9, y: handY + 7}
+    ], this.lightenColor(this.color, 10));
+
+    if (isBack) ctx.globalAlpha = 1.0;
+  }
+
+  lightenColor(color, percent) {
+    const num = parseInt(color.replace("#",""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return "#" + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
+  }
+
+  darkenColor(color, percent) {
+    const num = parseInt(color.replace("#",""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max(0, (num >> 16) - amt);
+    const G = Math.max(0, (num >> 8 & 0x00FF) - amt);
+    const B = Math.max(0, (num & 0x0000FF) - amt);
+    return "#" + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
+  }
+
+  drawHUD(ctx){
+    ctx.save();
+    const pos = this.body.position;
+
+    const keyY=pos.y - 120 - Math.sin(Date.now()*0.005)*8;
+    const shakeX = this.wrongKeyPenalty > 0 ? Math.sin(Date.now() * 0.5) * this.wrongKeyPenalty * 0.3 : 0;
+
+    if(this.isWordMode){
+      ctx.font="bold 48px 'Orbitron'";
+      ctx.textAlign="center";
+
+      const word = this.nextKey.toUpperCase();
+      const completedPart = word.substring(0, this.wordProgress);
+      const remainingPart = word.substring(this.wordProgress);
+
+      const totalWidth = ctx.measureText(word).width;
+      const completedWidth = ctx.measureText(completedPart).width;
+
+      if(completedPart){
+        ctx.fillStyle="rgba(0,255,136,0.7)";
+        ctx.shadowColor="rgba(0,255,136,0.7)";
+        ctx.shadowBlur=20;
+        ctx.fillText(completedPart, pos.x + shakeX - totalWidth/2 + completedWidth/2, keyY);
+      }
+
+      if(remainingPart){
+        ctx.fillStyle=this.wrongKeyPenalty > 0 ? "#ff0000" : this.color;
+        ctx.shadowColor=this.wrongKeyPenalty > 0 ? "#ff0000" : this.color;
+        ctx.shadowBlur=40;
+        ctx.fillText(remainingPart, pos.x + shakeX + completedWidth - totalWidth/2 + ctx.measureText(remainingPart).width/2, keyY);
+      }
+
+      if(this.popAlpha>0){
+        ctx.globalAlpha=this.popAlpha;
+        ctx.font="bold 56px 'Orbitron'";
+        ctx.fillStyle=this.color;
+        ctx.fillText(word, pos.x, keyY);
+      }
+    } else {
+      ctx.font="bold 52px 'Orbitron'";
+      ctx.textAlign="center";
+      ctx.fillStyle=this.wrongKeyPenalty > 0 ? "#ff0000" : this.color;
+      ctx.shadowColor=this.wrongKeyPenalty > 0 ? "#ff0000" : this.color;
+      ctx.shadowBlur=40;
+      ctx.globalAlpha=0.9;
+      ctx.fillText(this.nextKey.toUpperCase(), pos.x + shakeX, keyY);
+
+      if(this.popAlpha>0){
+        ctx.globalAlpha=this.popAlpha;
+        ctx.font="bold 64px 'Orbitron'";
+        ctx.fillText(this.nextKey.toUpperCase(), pos.x, keyY);
+      }
+    }
+
+    if(this.combo > 2){
+      ctx.globalAlpha=1;
+      ctx.font="bold 24px 'Orbitron'";
+      ctx.fillStyle=this.color;
+      ctx.shadowBlur=30;
+      ctx.fillText(`COMBO x${this.combo}`, pos.x, keyY - 55);
+    }
+
+    ctx.restore();
+  }
+
+  drawProgressBar(ctx){
+    const barWidth = 220;
+    const barHeight = 14;
+    const x = this.body.position.x - barWidth/2;
+    const y = this.body.position.y + 60;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(x, y, barWidth, barHeight);
+
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 20;
+    ctx.fillRect(x, y, barWidth * (this.progressPercent/100), barHeight);
+
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, barWidth, barHeight);
+
+    ctx.font="bold 11px 'Orbitron'";
+    ctx.fillStyle="#ffffff";
+    ctx.shadowBlur=10;
+    ctx.textAlign="center";
+    ctx.fillText(`${Math.floor(this.progressPercent)}%`, this.body.position.x, y + barHeight - 1);
+    ctx.restore();
+  }
+
+  draw(){
+    const ctx=this.world.ctx;
+    const pos=this.body.position;
+
+    // Particles
+    this.particles.forEach(p => p.draw(ctx));
+
+    // Main character with glow
+    ctx.save();
+    ctx.shadowColor=this.color;
+    ctx.shadowBlur=30;
+
+    const phase = (this.animTime) % 1;
+    this.drawDetailedRunner(pos.x, pos.y, phase);
+    ctx.restore();
+
+    // HUD elements
+    if(this.scene.STATE==="running"){
+      this.drawHUD(ctx);
+      this.drawProgressBar(ctx);
+    }
+  }
+}
+
+// ============================================
+// Scene: Poly Race Typing Duel
+// ============================================
+const PolyRaceScene = new Scene("PolyRace");
+
+// Word pool for word mode
+PolyRaceScene.WORD_POOL = [
+  'speed', 'race', 'fast', 'type', 'win', 'quick', 'rush', 'zoom', 'dash', 'run',
+  'jump', 'move', 'leap', 'fly', 'bolt', 'sprint', 'chase', 'pace', 'swift', 'rapid',
+  'code', 'game', 'play', 'skill', 'power', 'boost', 'track', 'score', 'goal', 'star'
+];
+
+// Double letter combinations
+PolyRaceScene.DOUBLE_LETTERS = [
+  'ab', 'cd', 'ef', 'gh', 'ij', 'kl', 'mn', 'op', 'qr', 'st',
+  'uv', 'wx', 'yz', 'ac', 'bd', 'ce', 'df', 'eg', 'fh', 'gi',
+  'hj', 'ik', 'jl', 'km', 'ln', 'mo', 'np', 'oq', 'pr', 'qs'
+];
+
+// Story mode sentences
+PolyRaceScene.STORY_POOL = [
+  'The quick brown fox jumps over the lazy dog.',
+  'Practice makes perfect in every skill you learn.',
+  'Speed and accuracy are both important.',
+  'Keep your eyes on the screen and type fast.',
+  'Racing against time improves your typing.',
+  'Every keystroke counts in this challenge.',
+  'Focus on the letters and move your fingers.',
+  'Compete with friends and improve together.',
+  'The faster you type, the quicker you win.',
+  'Master the keyboard one race at a time.'
+];
+
+PolyRaceScene.init=function(){
+  this.ctx=this.world.ctx;
+  this.players=[];
+
+  this.STATE="menu";
+  this.titleFloat=0;
+  this.countSeq=["READY","SET","GO!"];
+  this.countIndex=0;
+  this.countStart=0;
+  this.winner=null;
+  this.winnerStats=null;
+  this.canRestart=false;
+  this.raceStartTime=0;
+  this.raceTime=0;
+
+  // Read URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlMode = urlParams.get('mode');
+  const urlRaceType = urlParams.get('race');
+  const urlTypingMode = urlParams.get('type');
+  const urlRoomCode = urlParams.get('room');
+  const urlPlayers = urlParams.get('players');
+
+  this.selectedMode = urlMode || "practice";
+  this.gameMode = urlTypingMode || "letters";
+  this.playerCount = parseInt(urlPlayers) || 2;
+
+  // Set race distance
+  if(urlRaceType === "marathon") {
+    this.raceDistancePixels = 2400;
+  } else {
+    this.raceDistancePixels = 800;
+  }
+
+  this.atmosphereOffset=0;
+  this.cameraX=0;
+  this.targetCameraX=0;
+  this.gridOffset=0;
+
+  // Initialize players
+  this.initPlayers();
+
+  // Update UI
+  this.updateUIState();
+
+  // Auto-start countdown after 1.5 seconds if coming from mode selection
+  if(urlMode) {
+    setTimeout(() => {
+      if(this.STATE === "menu") {
+        this.startCountdown();
+      }
+    }, 1500);
+  }
+};
+
+PolyRaceScene.initPlayers=function(){
+  this.players=[];
+
+  const startX = 200;
+  const playerColors = ["#00ffff", "#ff00ff", "#00ff88", "#FFD700"];
+  const playerKeySets = [
+    ["a","s","d","f","g","h"],
+    ["j","k","l","u","i","o"],
+    ["q","w","e","r","t","y"],
+    ["z","x","c","v","b","n"]
+  ];
+
+  // Calculate Y positions based on player count
+  const getYPosition = (index, totalPlayers) => {
+    if (totalPlayers === 1) {
+      return this.world.H * 0.65; // Center for solo
+    } else if (totalPlayers === 2) {
+      return index === 0 ? this.world.H * 0.58 : this.world.H * 0.72;
+    } else {
+      // For 3-4 players, space them evenly
+      const spacing = 0.15;
+      const startY = 0.45;
+      return this.world.H * (startY + (index * spacing));
+    }
+  };
+
+  // Create players based on playerCount and typing mode
+  for(let i = 0; i < this.playerCount; i++) {
+    const color = playerColors[i];
+    const yPos = getYPosition(i, this.playerCount);
+    let keySet;
+
+    // Determine key set based on typing mode
+    if(this.gameMode === "letters") {
+      // Single letter mode - use individual keys
+      keySet = playerKeySets[i];
+    } else if(this.gameMode === "double") {
+      // Double letter mode - use two-letter combinations
+      keySet = this.DOUBLE_LETTERS;
+    } else if(this.gameMode === "words") {
+      // Words mode - use word pool
+      keySet = this.WORD_POOL;
+    } else if(this.gameMode === "story") {
+      // Story mode - use sentences
+      keySet = this.STORY_POOL;
+    } else if(this.gameMode === "custom") {
+      // Custom mode - for now use words (could be expanded)
+      keySet = this.WORD_POOL;
+    } else {
+      // Default to letters
+      keySet = playerKeySets[i];
+    }
+
+    const player = new Runner(this, startX, yPos, color, keySet, 1.6, i + 1);
+    this.players.push(player);
+  }
+};
+
+PolyRaceScene.updateUIState=function(){
+  const titleCard = document.getElementById('title-card');
+  const statsHud = document.getElementById('stats-hud');
+  const keyIndicator = document.getElementById('key-indicator');
+  const winScreen = document.getElementById('win-screen');
+
+  if(this.STATE === "menu"){
+    titleCard.style.display = 'block';
+    statsHud.style.display = 'none';
+    keyIndicator.style.display = 'none';
+    winScreen.classList.remove('active');
+  } else if(this.STATE === "countdown" || this.STATE === "running"){
+    titleCard.style.display = 'none';
+    statsHud.style.display = 'flex';
+    keyIndicator.style.display = 'flex';
+    winScreen.classList.remove('active');
+  } else if(this.STATE === "win"){
+    titleCard.style.display = 'none';
+    statsHud.style.display = 'none';
+    keyIndicator.style.display = 'none';
+    winScreen.classList.add('active');
+  }
+};
+
+PolyRaceScene.updateKeyIndicator=function(){
+  const indicator = document.getElementById('key-indicator');
+  if(this.STATE === "running") {
+    indicator.innerHTML = this.players.map((p, i) => {
+      let displayKey;
+      let isPressed;
+
+      if(p.isWordMode) {
+        displayKey = p.nextKey[p.wordProgress].toUpperCase();
+        isPressed = this.world.keys[p.nextKey[p.wordProgress]];
+      } else {
+        displayKey = p.nextKey.toUpperCase();
+        isPressed = this.world.keys[p.nextKey];
+      }
+
+      return `
+        <div class="player-keys">
+          <div class="player-label" style="color: ${p.color}">PLAYER ${i+1}</div>
+          <div class="key-display ${isPressed ? 'pressed' : ''}" style="color: ${p.color}; border-color: ${p.color}">
+            ${displayKey}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+};
+
+PolyRaceScene.keyEvents=function(e){
+  if(e.key===" "){
+    if(this.STATE==="menu"){ this.startCountdown(); }
+    else if(this.STATE==="win" && this.canRestart){ this.world.startScene("PolyRace"); }
+  }
+  if(e.key==="Escape" && this.STATE==="running"){
+    this.STATE="menu";
+    this.init();
+  }
+};
+
+PolyRaceScene.startCountdown=function(){
+  this.STATE="countdown";
+  this.countIndex=0;
+  this.countStart=new Date();
+  this.updateUIState();
+};
+
+PolyRaceScene.advanceCountdown=function(){
+  this.countIndex++;
+  if(this.countIndex>=this.countSeq.length){
+    this.STATE="running";
+    this.raceStartTime=Date.now();
+    this.updateUIState();
+  }
+  else { this.countStart=new Date(); }
+};
+
+PolyRaceScene.updateCountdown=function(){
+  if(new Date()-this.countStart>1000){ this.advanceCountdown(); }
+};
+
+PolyRaceScene.showCountdownText=function(text){
+  const display = document.getElementById('countdown-display');
+  display.textContent = text;
+  display.style.display = 'block';
+  display.classList.remove('active');
+
+  // Force reflow to restart animation
+  void display.offsetWidth;
+
+  display.classList.add('active');
+
+  setTimeout(() => {
+    display.style.display = 'none';
+    display.classList.remove('active');
+  }, 1000);
+};
+
+PolyRaceScene.updateCamera=function(){
+  if(this.STATE==="running"){
+    const leadPlayer = this.players.reduce((lead, p) =>
+      p.body.position.x > lead.body.position.x ? p : lead
+    );
+
+    this.targetCameraX = leadPlayer.body.position.x - this.world.W * 0.3;
+    this.targetCameraX = Math.max(0, this.targetCameraX);
+
+    this.cameraX += (this.targetCameraX - this.cameraX) * 0.08;
+  }
+};
+
+PolyRaceScene.updatePlayers=function(){
+  if(this.STATE==="running"){
+    this.raceTime = ((Date.now() - this.raceStartTime) / 1000).toFixed(1);
+    document.getElementById('time-display').textContent = `${this.raceTime}s`;
+
+    this.players.forEach(p=>{
+      p.checkKeyPress();
+      p.checkWin();
+    });
+    this.updateKeyIndicator();
+    this.updateCamera();
+  }
+  this.players.forEach(p=>p.update());
+};
+
+PolyRaceScene.renderBackground=function(){
+  const ctx=this.ctx, W=this.world.W, H=this.world.H;
+
+  // Atmospheric gradient (no need to redraw, already set in CSS)
+
+  // Fog layers (parallax effect)
+  this.atmosphereOffset += 0.002;
+  for(let i = 0; i < 3; i++) {
+    ctx.save();
+    ctx.globalAlpha = 0.15 - i * 0.03;
+    const parallaxOffset = -this.cameraX * (0.2 + i * 0.1);
+    const offset = Math.sin(this.atmosphereOffset + i * 0.5) * 50;
+    const grad = ctx.createRadialGradient(W/2 + offset + parallaxOffset, H * 0.3, 50, W/2 + offset + parallaxOffset, H * 0.3, 400);
+    grad.addColorStop(0, "#00ffff");
+    grad.addColorStop(1, "transparent");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  // Apply camera transformation
+  ctx.save();
+  ctx.translate(-this.cameraX, 0);
+
+  // Scrolling grid floor with perspective
+  ctx.save();
+  ctx.strokeStyle="rgba(0,255,255,0.2)";
+  ctx.lineWidth=1.5;
+
+  const horizonY = H * 0.4;
+  const groundY = H * 0.85;
+  const cell = 60;
+
+  // Horizontal lines
+  for(let i = 0; i < 20; i++){
+    const t = i / 20;
+    const y = horizonY + (groundY - horizonY) * (t * t);
+    const alpha = 0.1 + t * 0.35;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    const lineStartX = this.cameraX - W;
+    const lineEndX = this.cameraX + W * 3;
+    ctx.moveTo(lineStartX, y);
+    ctx.lineTo(lineEndX, y);
+    ctx.stroke();
+  }
+
+  // Vertical lines with scrolling
+  const gridOffset = Math.floor(this.cameraX / cell) * cell;
+  for(let i = -5; i < 30; i++){
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath();
+    const baseX = gridOffset + i * cell;
+    ctx.moveTo(baseX, horizonY);
+    ctx.lineTo(baseX, groundY);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Speed lines
+  if(this.STATE === "running"){
+    ctx.save();
+    ctx.strokeStyle = "rgba(0,255,255,0.15)";
+    ctx.lineWidth = 2;
+    for(let i = 0; i < 8; i++){
+      const y = H * 0.3 + i * 60;
+      const speed = (Date.now() * 0.5 + i * 100) % 1000;
+      const startX = this.cameraX + W - speed;
+      const endX = startX - 100;
+      ctx.globalAlpha = 0.3 - (speed / 1000) * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(startX, y);
+      ctx.lineTo(endX, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Checkered Finish Line with Perspective (3D depth) - More Faded
+  const finishX = this.players[0].startX + this.raceDistancePixels;
+
+  ctx.save();
+
+  // Create perspective finish line banner
+  const topWidth = 40;      // Narrow at horizon (top)
+  const bottomWidth = 120;  // Wide at ground (bottom)
+  const rows = 12;          // Number of checkered rows
+  const cols = 3;           // Number of checkered columns
+
+  // Draw checkered pattern with perspective - More faded
+  for(let row = 0; row < rows; row++) {
+    const t = row / rows;
+    const nextT = (row + 1) / rows;
+
+    // Y positions with perspective curve
+    const y1 = horizonY + (groundY - horizonY) * (t * t);
+    const y2 = horizonY + (groundY - horizonY) * (nextT * nextT);
+
+    // Width increases as we go down (perspective)
+    const width1 = topWidth + (bottomWidth - topWidth) * t;
+    const width2 = topWidth + (bottomWidth - topWidth) * nextT;
+
+    const colWidth1 = width1 / cols;
+    const colWidth2 = width2 / cols;
+
+    for(let col = 0; col < cols; col++) {
+      // Alternating pattern
+      const isWhite = (row + col) % 2 === 0;
+
+      // Calculate trapezoid points for this cell
+      const x1_left = finishX - width1/2 + col * colWidth1;
+      const x1_right = finishX - width1/2 + (col + 1) * colWidth1;
+      const x2_left = finishX - width2/2 + col * colWidth2;
+      const x2_right = finishX - width2/2 + (col + 1) * colWidth2;
+
+      // Draw trapezoid - Much more faded (reduced opacity)
+      ctx.globalAlpha = 0.15 + t * 0.25; // Reduced from 0.4 + t * 0.4
+      ctx.fillStyle = isWhite ? '#ffffff' : '#000000';
+      ctx.beginPath();
+      ctx.moveTo(x1_left, y1);
+      ctx.lineTo(x1_right, y1);
+      ctx.lineTo(x2_right, y2);
+      ctx.lineTo(x2_left, y2);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Glowing edges with perspective - More faded
+  ctx.globalAlpha = 0.3; // Reduced from 0.6
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 2; // Reduced from 3
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur = 15; // Reduced from 25
+
+  // Left edge
+  ctx.beginPath();
+  ctx.moveTo(finishX - topWidth/2, horizonY);
+  ctx.lineTo(finishX - bottomWidth/2, groundY);
+  ctx.stroke();
+
+  // Right edge
+  ctx.beginPath();
+  ctx.moveTo(finishX + topWidth/2, horizonY);
+  ctx.lineTo(finishX + bottomWidth/2, groundY);
+  ctx.stroke();
+
+  // Top edge
+  ctx.globalAlpha = 0.15; // Reduced from 0.3
+  ctx.lineWidth = 1.5; // Reduced from 2
+  ctx.beginPath();
+  ctx.moveTo(finishX - topWidth/2, horizonY);
+  ctx.lineTo(finishX + topWidth/2, horizonY);
+  ctx.stroke();
+
+  // Bottom edge
+  ctx.globalAlpha = 0.35; // Reduced from 0.6
+  ctx.lineWidth = 3; // Reduced from 4
+  ctx.beginPath();
+  ctx.moveTo(finishX - bottomWidth/2, groundY);
+  ctx.lineTo(finishX + bottomWidth/2, groundY);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Restore camera transformation
+  ctx.restore();
+};
+
+PolyRaceScene.showWinScreen=function(){
+  if(this.STATE !== "win") return;
+
+  const winTitle = document.getElementById('win-title');
+  const winTime = document.getElementById('win-time');
+  const winScore = document.getElementById('win-score');
+  const winCombo = document.getElementById('win-combo');
+
+  const winnerColor = this.players[this.winner].color;
+
+  winTitle.textContent = `PLAYER ${this.winner + 1} WINS!`;
+  winTitle.style.color = winnerColor;
+
+  winTime.textContent = `Time: ${this.raceTime}s`;
+  winScore.textContent = `Score: ${this.winnerStats.score}`;
+  winCombo.textContent = `Max Combo: ${this.winnerStats.maxCombo}`;
+
+  this.updateUIState();
+  this.canRestart = true;
+};
+
+PolyRaceScene.render=function(){
+  if(this.STATE==="countdown") {
+    this.updateCountdown();
+    if(this.countStart){
+      this.showCountdownText(this.countSeq[this.countIndex]);
+    }
+  }
+
+  this.updatePlayers();
+
+  this.world.clear();
+  this.renderBackground();
+
+  // Apply camera transformation for players
+  const ctx = this.ctx;
+  ctx.save();
+  ctx.translate(-this.cameraX, 0);
+  this.players.forEach(p=>p.draw());
+  ctx.restore();
+
+  if(this.STATE === "win" && !this.canRestart){
+    this.showWinScreen();
+  }
+};
+
+// ============================================
+// Game World
+// ============================================
+class GameWorld {
+  constructor(){
+    this.canvas=document.getElementById("game-canvas");
+    this.ctx=this.canvas.getContext("2d");
+    this.ctx.imageSmoothingEnabled=false;
+    this.resize();
+    window.addEventListener('resize',()=>this.resize());
+    this.keys={};
+    this.keyBuffer = {};
+    document.addEventListener("keydown",e=>this.onKeyDown(e));
+    document.addEventListener("keyup",e=>this.onKeyUp(e));
+    this.FPS={now:0,delta:0,last:Util.timeStamp(),step:1/60};
+    this.scenes={}; this.current_scene=null;
+
+    try {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+      console.log("Audio not supported");
+    }
+  }
+  resize(){
+    this.W=window.innerWidth;
+    this.H=window.innerHeight;
+    this.canvas.width=this.W;
+    this.canvas.height=this.H;
+  }
+  addScene(scene){ scene.giveWorld(this); this.scenes[scene.name]=scene; }
+  startScene(name){
+    this.current_scene=this.scenes[name];
+    if(!this.current_scene.init_once){
+      this.current_scene.init();
+      this.current_scene.init_once=true;
+    } else {
+      this.current_scene.init_once = false;
+      this.current_scene.init();
+      this.current_scene.init_once = true;
+    }
+    this.loop();
+  }
+  loop(){
+    this.FPS.now=Util.timeStamp();
+    this.FPS.delta+=Math.min(1,(this.FPS.now-this.FPS.last)/1000);
+    while(this.FPS.delta>this.FPS.step){
+      this.FPS.delta-=this.FPS.step;
+      this.render();
+    }
+    this.FPS.last=this.FPS.now;
+    requestAnimationFrame(()=>this.loop());
+  }
+  render(){ if(this.current_scene)this.current_scene.render(); }
+  clear(){ this.ctx.fillStyle="#000"; this.ctx.fillRect(0,0,this.W,this.H); }
+  onKeyDown(e){
+    const key = e.key.toLowerCase();
+    if(!this.keyBuffer[key]) {
+      this.keys[key]=true;
+      this.keyBuffer[key]=true;
+      if(this.current_scene&&this.current_scene.keyEvents)this.current_scene.keyEvents(e);
+    }
+    if(['a','s','d','f','g','h','j','k','l','u','i','o',' ','Escape','1','2'].includes(e.key)){
+      e.preventDefault();
+    }
+  }
+  onKeyUp(e){
+    const key = e.key.toLowerCase();
+    this.keys[key]=false;
+    this.keyBuffer[key]=false;
+  }
+}
+
+// ============================================
+// Start
+// ============================================
+const game=new GameWorld();
+game.addScene(PolyRaceScene);
+game.startScene("PolyRace");
+  </script>
+</body>
+</html>
