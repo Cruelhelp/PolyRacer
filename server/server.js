@@ -1,21 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const Pusher = require('pusher');
 
-// ======================================
-// Express Setup
-// ======================================
+// Initialize Express app
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('../')); // Serve your HTML/CSS/JS
 
-// ======================================
-// Pusher Setup
-// ======================================
+// ✅ Serve static files from the project root (since your HTMLs are there)
+app.use(express.static(path.join(__dirname, '..')));
+
+// Initialize Pusher
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID,
   key: process.env.PUSHER_KEY,
@@ -24,180 +24,120 @@ const pusher = new Pusher({
   useTLS: true
 });
 
-// ======================================
-// In-memory Room System
-// ======================================
-const rooms = {}; // { roomCode: { players: {}, gameStarted, winner, raceDistance, startTime } }
+// Simple global game state (works for single-session mode)
+const gameState = {
+  players: {},
+  gameStarted: false,
+  raceDistance: 0.6,
+  winner: null
+};
 
-// Utility: Generate random 6-character invite codes
-function generateInviteCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
+// === API ROUTES ===
 
-// ======================================
-// API ROUTES
-// ======================================
+// Pusher config (client needs this)
+app.get('/api/pusher-config', (req, res) => {
+  res.json({
+    key: process.env.PUSHER_KEY,
+    cluster: process.env.PUSHER_CLUSTER
+  });
+});
 
-// --- Create or Join Room ---
 app.post('/api/join', (req, res) => {
-  const { playerId, playerName, inviteCode } = req.body;
-  const roomCode = inviteCode || generateInviteCode();
+  const { playerId, playerName = `Player ${Object.keys(gameState.players).length + 1}` } = req.body;
 
-  if (!playerId) {
-    return res.status(400).json({ error: 'Player ID is required' });
-  }
+  if (!playerId) return res.status(400).json({ error: 'Player ID required' });
 
-  // Create room if it doesn’t exist
-  if (!rooms[roomCode]) {
-    rooms[roomCode] = {
-      id: roomCode,
-      players: {},
-      gameStarted: false,
-      winner: null,
-      raceDistance: 0.6,
-      startTime: null
-    };
-  }
-
-  const room = rooms[roomCode];
-
-  // Add player to room if not already in it
-  if (!room.players[playerId]) {
-    room.players[playerId] = {
+  if (!gameState.players[playerId]) {
+    gameState.players[playerId] = {
       id: playerId,
-      name: playerName || `Player ${Object.keys(room.players).length + 1}`,
+      name: playerName,
       position: 0,
       progress: 0,
       score: 0,
       combo: 0,
-      joinedAt: new Date().toISOString()
+      authenticated: true
     };
 
-    // Notify clients in room
-    pusher.trigger(`poly-race-${roomCode}`, 'player_joined', {
-      roomId: roomCode,
-      player: room.players[playerId],
-      totalPlayers: Object.keys(room.players).length
+    pusher.trigger('poly-race-channel', 'player_joined', {
+      playerId,
+      playerName,
+      totalPlayers: Object.keys(gameState.players).length
     });
   }
 
-  // Return the full room state to the joining client
   res.json({
-    success: true,
-    roomId: roomCode,
     playerId,
-    gameState: {
-      ...room,
-      players: Object.values(room.players)
-    }
+    gameState: { ...gameState, players: Object.values(gameState.players) }
   });
 });
 
-// --- Update Player State ---
 app.post('/api/update', (req, res) => {
-  const { roomId, playerId, position, progress } = req.body;
+  const { playerId, position, progress, score, combo } = req.body;
 
-  const room = rooms[roomId];
-  if (!room) return res.status(404).json({ error: 'Room not found' });
-  if (!room.players[playerId]) return res.status(404).json({ error: 'Player not found' });
+  if (!gameState.players[playerId]) return res.status(404).json({ error: 'Player not found' });
 
-  // Update player’s progress
-  room.players[playerId].position = position;
-  room.players[playerId].progress = progress;
-  room.players[playerId].lastUpdate = new Date().toISOString();
+  const player = gameState.players[playerId];
+  player.position = position;
+  player.progress = progress;
+  player.score = score || 0;
+  player.combo = combo || 0;
 
-  // Broadcast live update
-  pusher.trigger(`poly-race-${roomId}`, 'player_update', {
-    playerId,
-    position,
-    progress
-  });
+  pusher.trigger('poly-race-channel', 'player_update', { playerId, position, progress, score, combo });
 
-  // Check for winner
-  if (progress >= 100 && !room.winner) {
-    room.winner = playerId;
-    room.gameStarted = false;
-
-    pusher.trigger(`poly-race-${roomId}`, 'game_ended', {
+  if (progress >= 100 && !gameState.winner) {
+    gameState.winner = playerId;
+    gameState.gameStarted = false;
+    pusher.trigger('poly-race-channel', 'game_ended', {
       winner: playerId,
-      winnerName: room.players[playerId].name
+      winnerName: player.name
     });
   }
 
   res.json({ success: true });
 });
 
-// --- Start Game in Room ---
 app.post('/api/start', (req, res) => {
-  const { roomId, playerId } = req.body;
-  const room = rooms[roomId];
+  const { playerId } = req.body;
 
-  if (!room) return res.status(404).json({ error: 'Room not found' });
-  if (!room.players[playerId]) return res.status(403).json({ error: 'Unauthorized player' });
+  if (!gameState.players[playerId]) return res.status(403).json({ error: 'Unauthorized' });
 
-  if (!room.gameStarted) {
-    room.gameStarted = true;
-    room.winner = null;
-    room.startTime = new Date().toISOString();
+  if (!gameState.gameStarted) {
+    gameState.gameStarted = true;
+    gameState.winner = null;
+    gameState.startTime = new Date().toISOString();
 
-    // Reset players
-    Object.values(room.players).forEach(p => {
+    Object.values(gameState.players).forEach(p => {
       p.position = 0;
       p.progress = 0;
       p.combo = 0;
       p.score = 0;
     });
 
-    // Broadcast to all clients in room
-    pusher.trigger(`poly-race-${roomId}`, 'game_started', {
-      startTime: room.startTime,
-      raceDistance: room.raceDistance
+    pusher.trigger('poly-race-channel', 'game_started', {
+      startTime: gameState.startTime,
+      raceDistance: gameState.raceDistance
     });
   }
 
-  res.json({ success: true, room });
+  res.json({ success: true });
 });
 
-// --- Generate New Invite Code ---
-app.get('/api/invite', (req, res) => {
-  const code = generateInviteCode();
-  res.json({ inviteCode: code });
-});
-
-// --- Get Room State ---
-app.get('/api/state/:roomId', (req, res) => {
-  const { roomId } = req.params;
-  const room = rooms[roomId];
-  if (!room) return res.status(404).json({ error: 'Room not found' });
-  res.json({ success: true, room });
-});
-
-// --- Reset Room (optional for debugging) ---
-app.post('/api/reset', (req, res) => {
-  const { roomId } = req.body;
-  if (roomId && rooms[roomId]) {
-    delete rooms[roomId];
-    return res.json({ success: true, message: `Room ${roomId} reset` });
+app.post('/api/leave', (req, res) => {
+  const { playerId } = req.body;
+  if (gameState.players[playerId]) {
+    delete gameState.players[playerId];
+    pusher.trigger('poly-race-channel', 'player_left', {
+      playerId,
+      totalPlayers: Object.keys(gameState.players).length
+    });
   }
-  res.json({ success: true, message: 'All rooms cleared', rooms: (Object.keys(rooms).length = 0) });
+  res.json({ success: true });
 });
 
-// ======================================
-// Default Route
-// ======================================
+// Serve index.html for everything else
 app.get('*', (req, res) => {
-  res.sendFile('index.html', { root: '../' });
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
-// ======================================
-// Server Start
-// ======================================
-app.listen(port, () => {
-  console.log(`✅ POLY RACE server running on http://localhost:${port}`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('Shutting down POLY RACE server...');
-  process.exit(0);
-});
+// Start server
+app.listen(port, () => console.log(`✅ Server running on port ${port}`));
