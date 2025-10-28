@@ -1,15 +1,11 @@
-require('dotenv').config();
 const express = require('express');
-const http = require('http');
-const socketIO = require('socket.io');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 
-// Initialize Express app
 const app = express();
-const server = http.createServer(app);
-
-// Initialize Socket.IO with CORS
-const io = socketIO(server, {
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
@@ -18,44 +14,15 @@ const io = socketIO(server, {
 
 const port = process.env.PORT || 3001;
 
-// Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../'))); // Serve static files
+app.use(express.static(path.join(__dirname, '..')));
 
-// In-memory storage
+// Game state management
 const rooms = new Map();
 const players = new Map();
+const waitingPlayers = [];
 
-// Mock leaderboard (replace with database later)
-const leaderboard = [
-  { username: 'SpeedDemon', wins: 127, wpm: 98 },
-  { username: 'TypeMaster', wins: 103, wpm: 92 },
-  { username: 'QuickFingers', wins: 89, wpm: 88 },
-  { username: 'NeonRacer', wins: 76, wpm: 85 },
-  { username: 'KeyboardKing', wins: 68, wpm: 82 },
-  { username: 'FlashTyper', wins: 54, wpm: 79 },
-  { username: 'LetterLegend', wins: 47, wpm: 76 },
-  { username: 'SwiftKeys', wins: 39, wpm: 73 },
-  { username: 'RapidRacer', wins: 31, wpm: 70 },
-  { username: 'TurboTypist', wins: 24, wpm: 68 }
-];
-
-// API Routes for health check and leaderboard
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    players: players.size,
-    rooms: rooms.size
-  });
-});
-
-app.get('/leaderboard', (req, res) => {
-  res.json({
-    leaderboard: leaderboard
-  });
-});
-
-// Generate unique room code
+// Helper functions
 function generateRoomCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
@@ -65,60 +32,47 @@ function generateRoomCode() {
   return rooms.has(code) ? generateRoomCode() : code;
 }
 
-// Socket.IO Connection Handler
-io.on('connection', (socket) => {
-  console.log(`[CONNECT] Player connected: ${socket.id}`);
+function getOnlinePlayers() {
+  return Array.from(players.values()).map(p => ({
+    id: p.id,
+    name: p.name,
+    status: p.inGame ? 'in-game' : 'online'
+  }));
+}
 
-  // Player Registration
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('Player connected:', socket.id);
+
+  // Player registers with username
   socket.on('player:register', (data) => {
-    const player = {
+    const playerData = {
       id: socket.id,
-      name: data.name || `Player${Math.floor(Math.random() * 10000)}`,
-      status: 'online',
-      wins: 0,
-      gamesPlayed: 0,
-      currentRoom: null
+      name: data.name,
+      socketId: socket.id,
+      inGame: false,
+      roomCode: null
     };
-    
-    players.set(socket.id, player);
-    
+
+    players.set(socket.id, playerData);
+
     socket.emit('player:registered', {
       playerId: socket.id,
-      player: player
+      playerData
     });
 
-    console.log(`[REGISTER] ${player.name} (${socket.id})`);
-    broadcastPlayerList();
-  });
-
-  // Get online players
-  socket.on('players:get', () => {
-    const playerList = Array.from(players.values());
-    socket.emit('players:online', {
-      count: playerList.length,
-      players: playerList
+    // Broadcast updated player count
+    io.emit('players:online', {
+      count: players.size,
+      players: getOnlinePlayers()
     });
+
+    console.log(`Player registered: ${playerData.name} (${socket.id})`);
   });
 
-  // Get room list
-  socket.on('rooms:get', () => {
-    const roomList = Array.from(rooms.values())
-      .filter(room => room.status === 'waiting')
-      .map(room => ({
-        code: room.code,
-        name: room.name,
-        players: room.players.length,
-        maxPlayers: room.maxPlayers,
-        status: room.status
-      }));
-    
-    socket.emit('rooms:list', { rooms: roomList });
-  });
-
-  // Create Room
-  socket.on('room:create', (data) => {
+  // Create a new room
+  socket.on('room:create', () => {
     const player = players.get(socket.id);
-    
     if (!player) {
       socket.emit('room:error', { message: 'Player not registered' });
       return;
@@ -127,410 +81,390 @@ io.on('connection', (socket) => {
     const roomCode = generateRoomCode();
     const room = {
       code: roomCode,
-      name: data.roomName || `${player.name}'s Room`,
       host: socket.id,
-      players: [player],
-      maxPlayers: 4,
-      status: 'waiting', // waiting, countdown, racing, finished
-      typingMode: data.typingMode || 'letters',
-      gameState: {
-        countdown: 3,
-        startTime: null,
-        playerPositions: {},
-        raceDistance: 800
-      }
+      players: [{
+        id: socket.id,
+        name: player.name,
+        position: 0,
+        progress: 0,
+        score: 0,
+        combo: 0,
+        ready: false
+      }],
+      gameState: 'waiting', // waiting, countdown, playing, finished
+      winner: null,
+      createdAt: Date.now()
     };
 
     rooms.set(roomCode, room);
     socket.join(roomCode);
-    player.currentRoom = roomCode;
-    player.status = 'in-game';
-    
+
+    player.roomCode = roomCode;
+    player.inGame = true;
+
     socket.emit('room:created', {
-      roomCode: roomCode,
-      room: room
+      roomCode,
+      room
     });
 
-    console.log(`[ROOM CREATE] ${roomCode} by ${player.name}`);
-    broadcastRoomList();
-    broadcastPlayerList();
+    console.log(`Room ${roomCode} created by ${player.name}`);
   });
 
-  // Join Room by Code
+  // Join existing room
   socket.on('room:join', (data) => {
-    const room = rooms.get(data.roomCode);
+    const { roomCode } = data;
+    const room = rooms.get(roomCode);
     const player = players.get(socket.id);
-    
+
+    if (!player) {
+      socket.emit('room:error', { message: 'Player not registered' });
+      return;
+    }
+
     if (!room) {
       socket.emit('room:error', { message: 'Room not found' });
       return;
     }
 
+    if (room.players.length >= 2) {
+      socket.emit('room:error', { message: 'Room is full' });
+      return;
+    }
+
+    if (room.gameState !== 'waiting') {
+      socket.emit('room:error', { message: 'Game already started' });
+      return;
+    }
+
+    // Add player to room
+    room.players.push({
+      id: socket.id,
+      name: player.name,
+      position: 0,
+      progress: 0,
+      score: 0,
+      combo: 0,
+      ready: false
+    });
+
+    socket.join(roomCode);
+    player.roomCode = roomCode;
+    player.inGame = true;
+
+    socket.emit('room:joined', { roomCode, room });
+
+    // Notify all players in room
+    io.to(roomCode).emit('room:updated', {
+      room,
+      playerCount: room.players.length
+    });
+
+    console.log(`${player.name} joined room ${roomCode}`);
+  });
+
+  // Random matchmaking
+  socket.on('match:random', () => {
+    const player = players.get(socket.id);
     if (!player) {
       socket.emit('room:error', { message: 'Player not registered' });
       return;
     }
 
-    if (room.players.length >= room.maxPlayers) {
-      socket.emit('room:error', { message: 'Room is full' });
-      return;
-    }
+    // Check if there's a waiting player
+    if (waitingPlayers.length > 0) {
+      const opponentId = waitingPlayers.shift();
+      const opponent = players.get(opponentId);
 
-    if (room.status !== 'waiting') {
-      socket.emit('room:error', { message: 'Game already in progress' });
-      return;
-    }
-
-    // Check if already in room
-    if (!room.players.find(p => p.id === socket.id)) {
-      room.players.push(player);
-    }
-    
-    socket.join(data.roomCode);
-    player.currentRoom = data.roomCode;
-    player.status = 'in-game';
-    
-    socket.emit('room:joined', {
-      roomCode: data.roomCode,
-      room: room
-    });
-
-    // Notify other players
-    socket.to(data.roomCode).emit('room:player_joined', {
-      player: player,
-      room: room
-    });
-
-    console.log(`[ROOM JOIN] ${player.name} → ${data.roomCode}`);
-    broadcastRoomList();
-    broadcastPlayerList();
-  });
-
-  // Leave Room
-  socket.on('room:leave', (data) => {
-    leaveRoom(socket);
-  });
-
-  // Start Game (Host only)
-  socket.on('game:start', (data) => {
-    const room = rooms.get(data.roomCode);
-    
-    if (!room) {
-      socket.emit('game:error', { message: 'Room not found' });
-      return;
-    }
-    
-    if (room.host !== socket.id) {
-      socket.emit('game:error', { message: 'Only host can start game' });
-      return;
-    }
-
-    if (room.status !== 'waiting') {
-      socket.emit('game:error', { message: 'Game already started' });
-      return;
-    }
-
-    room.status = 'countdown';
-    const countdownStartTime = Date.now();
-    
-    // Emit synchronized countdown to all players in room
-    io.to(data.roomCode).emit('game:countdown_start', {
-      countdown: 3,
-      startTime: countdownStartTime
-    });
-
-    console.log(`[GAME START] ${data.roomCode} countdown started`);
-
-    // Start race after countdown
-    setTimeout(() => {
-      if (room.status === 'countdown') {
-        room.status = 'racing';
-        room.gameState.startTime = Date.now();
-        
-        io.to(data.roomCode).emit('game:race_start', {
-          startTime: room.gameState.startTime
-        });
-        
-        console.log(`[GAME RACING] ${data.roomCode} race started`);
+      if (!opponent) {
+        socket.emit('match:searching');
+        waitingPlayers.push(socket.id);
+        return;
       }
-    }, 3000);
+
+      const roomCode = generateRoomCode();
+      const room = {
+        code: roomCode,
+        host: opponentId,
+        players: [
+          {
+            id: opponentId,
+            name: opponent.name,
+            position: 0,
+            progress: 0,
+            score: 0,
+            combo: 0,
+            ready: false
+          },
+          {
+            id: socket.id,
+            name: player.name,
+            position: 0,
+            progress: 0,
+            score: 0,
+            combo: 0,
+            ready: false
+          }
+        ],
+        gameState: 'waiting',
+        winner: null,
+        createdAt: Date.now()
+      };
+
+      rooms.set(roomCode, room);
+
+      // Add both players to room
+      io.sockets.sockets.get(opponentId)?.join(roomCode);
+      socket.join(roomCode);
+
+      opponent.roomCode = roomCode;
+      opponent.inGame = true;
+      player.roomCode = roomCode;
+      player.inGame = true;
+
+      // Notify both players
+      io.to(roomCode).emit('match:found', { roomCode, room });
+
+      console.log(`Match created: ${roomCode} (${opponent.name} vs ${player.name})`);
+    } else {
+      // Add to waiting list
+      waitingPlayers.push(socket.id);
+      socket.emit('match:searching');
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        const index = waitingPlayers.indexOf(socket.id);
+        if (index > -1) {
+          waitingPlayers.splice(index, 1);
+          socket.emit('match:timeout');
+        }
+      }, 30000);
+    }
   });
 
-  // Game State Update
-  socket.on('game:update', (data) => {
-    const room = rooms.get(data.roomCode);
-    if (!room || room.status !== 'racing') return;
-
-    // Update player position in room
-    room.gameState.playerPositions[socket.id] = {
-      x: data.position?.x || 0,
-      progress: data.progress || 0,
-      combo: data.combo || 0,
-      score: data.score || 0
-    };
-
-    // Broadcast to other players in room (not sender)
-    socket.to(data.roomCode).emit('game:player_update', {
-      playerId: socket.id,
-      position: data.position,
-      progress: data.progress,
-      combo: data.combo,
-      score: data.score
+  // Get all online players
+  socket.on('players:get', () => {
+    socket.emit('players:list', {
+      players: getOnlinePlayers()
     });
   });
 
-  // Player Finished Race
-  socket.on('game:finish', (data) => {
-    const room = rooms.get(data.roomCode);
+  // Player ready status
+  socket.on('player:ready', () => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+
+    const room = rooms.get(player.roomCode);
     if (!room) return;
 
-    const player = players.get(socket.id);
-    if (!player) return;
+    const roomPlayer = room.players.find(p => p.id === socket.id);
+    if (roomPlayer) {
+      roomPlayer.ready = true;
+    }
 
-    // Only accept first finish
-    if (!room.winner) {
-      room.winner = socket.id;
-      room.status = 'finished';
+    // Notify room
+    io.to(player.roomCode).emit('room:updated', { room });
 
-      // Update player stats
-      player.wins = (player.wins || 0) + 1;
-      player.gamesPlayed = (player.gamesPlayed || 0) + 1;
+    // Check if all players ready
+    if (room.players.every(p => p.ready)) {
+      // Start countdown
+      room.gameState = 'countdown';
+      io.to(player.roomCode).emit('game:countdown', { room });
 
-      // Notify all players in room
-      io.to(data.roomCode).emit('game:winner', {
-        winnerId: socket.id,
-        winnerName: player.name,
-        stats: data.stats || {},
-        finalTime: data.time
-      });
-
-      console.log(`[GAME WIN] ${player.name} won in ${data.roomCode}`);
-
-      // Auto-reset room after 10 seconds
+      // After 3 seconds, start game
       setTimeout(() => {
-        if (rooms.has(data.roomCode)) {
-          resetRoom(data.roomCode);
-        }
-      }, 10000);
+        room.gameState = 'playing';
+        room.startTime = Date.now();
+        io.to(player.roomCode).emit('game:start', { room });
+      }, 3000);
     }
   });
 
-  // Chat Message
+  // Update player game state
+  socket.on('player:update', (data) => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+
+    const room = rooms.get(player.roomCode);
+    if (!room || room.gameState !== 'playing') return;
+
+    const roomPlayer = room.players.find(p => p.id === socket.id);
+    if (roomPlayer) {
+      roomPlayer.position = data.position;
+      roomPlayer.progress = data.progress;
+      roomPlayer.score = data.score;
+      roomPlayer.combo = data.combo;
+    }
+
+    // Broadcast to all players in room
+    io.to(player.roomCode).emit('game:update', {
+      players: room.players
+    });
+  });
+
+  // Player finished race
+  socket.on('player:finished', (data) => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+
+    const room = rooms.get(player.roomCode);
+    if (!room || room.gameState !== 'playing') return;
+
+    if (!room.winner) {
+      room.winner = socket.id;
+      room.gameState = 'finished';
+      room.endTime = Date.now();
+      room.raceTime = ((room.endTime - room.startTime) / 1000).toFixed(1);
+
+      const winnerPlayer = room.players.find(p => p.id === socket.id);
+
+      io.to(player.roomCode).emit('game:finished', {
+        winner: {
+          id: socket.id,
+          name: player.name,
+          score: winnerPlayer?.score || 0,
+          time: room.raceTime
+        },
+        room
+      });
+
+      console.log(`${player.name} won in room ${player.roomCode}`);
+    }
+  });
+
+  // Leave room
+  socket.on('room:leave', () => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+
+    const room = rooms.get(player.roomCode);
+    if (room) {
+      room.players = room.players.filter(p => p.id !== socket.id);
+
+      // Notify remaining players
+      io.to(player.roomCode).emit('room:player-left', {
+        playerId: socket.id,
+        playerName: player.name,
+        room
+      });
+
+      // Delete room if empty
+      if (room.players.length === 0) {
+        rooms.delete(player.roomCode);
+        console.log(`Room ${player.roomCode} deleted`);
+      }
+    }
+
+    socket.leave(player.roomCode);
+    player.roomCode = null;
+    player.inGame = false;
+  });
+
+  // Global chat message
   socket.on('chat:send', (data) => {
     const player = players.get(socket.id);
     if (!player) return;
 
-    const message = {
-      username: player.name,
-      message: data.message.substring(0, 200), // Limit message length
-      timestamp: new Date().toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
-    };
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-    // Broadcast to all players
-    io.emit('chat:message', message);
+    // Broadcast message to all connected players
+    io.emit('chat:message', {
+      username: data.username || player.name,
+      message: data.message,
+      timestamp: timestamp
+    });
+
+    console.log(`[CHAT] ${player.name}: ${data.message}`);
   });
 
-  // Challenge System
-  socket.on('challenge:send', (data) => {
-    const challenger = players.get(socket.id);
-    const target = players.get(data.targetId);
-    
-    if (!challenger || !target) {
-      socket.emit('challenge:error', { message: 'Player not found' });
-      return;
-    }
-
-    if (target.status === 'in-game') {
-      socket.emit('challenge:error', { message: 'Player is already in a game' });
-      return;
-    }
-
-    io.to(data.targetId).emit('challenge:received', {
-      challengerId: socket.id,
-      challengerName: challenger.name
-    });
-
-    socket.emit('challenge:sent', {
-      targetId: data.targetId,
-      targetName: target.name
-    });
-
-    console.log(`[CHALLENGE] ${challenger.name} → ${target.name}`);
-  });
-
-  socket.on('challenge:accept', (data) => {
-    const challenger = players.get(data.challengerId);
-    const accepter = players.get(socket.id);
-    
-    if (!challenger || !accepter) {
-      socket.emit('challenge:error', { message: 'Player not found' });
-      return;
-    }
-
-    // Create 1v1 room
-    const roomCode = generateRoomCode();
-    const room = {
-      code: roomCode,
-      name: `${challenger.name} vs ${accepter.name}`,
-      host: data.challengerId,
-      players: [challenger, accepter],
-      maxPlayers: 2,
-      status: 'waiting',
-      typingMode: 'letters',
-      gameState: {
-        countdown: 3,
-        startTime: null,
-        playerPositions: {},
-        raceDistance: 800
-      }
-    };
-
-    rooms.set(roomCode, room);
-    
-    // Join both players
-    const challengerSocket = io.sockets.sockets.get(data.challengerId);
-    if (challengerSocket) {
-      challengerSocket.join(roomCode);
-      challenger.currentRoom = roomCode;
-      challenger.status = 'in-game';
-    }
-    
-    socket.join(roomCode);
-    accepter.currentRoom = roomCode;
-    accepter.status = 'in-game';
-
-    // Notify both players
-    io.to(data.challengerId).emit('challenge:accepted', { 
-      roomCode,
-      room 
-    });
-    
-    socket.emit('challenge:accepted', { 
-      roomCode,
-      room 
-    });
-
-    console.log(`[1v1 ROOM] ${roomCode} created for challenge`);
-    broadcastPlayerList();
-  });
-
-  socket.on('challenge:decline', (data) => {
-    const decliner = players.get(socket.id);
-    if (!decliner) return;
-
-    io.to(data.challengerId).emit('challenge:declined', {
-      declinerId: socket.id,
-      declinerName: decliner.name
-    });
-
-    console.log(`[CHALLENGE DECLINED] ${decliner.name} declined`);
-  });
-
-  // Disconnect Handler
+  // Player disconnects
   socket.on('disconnect', () => {
-    console.log(`[DISCONNECT] ${socket.id}`);
-    
     const player = players.get(socket.id);
-    if (player?.currentRoom) {
-      leaveRoom(socket);
+
+    if (player && player.roomCode) {
+      const room = rooms.get(player.roomCode);
+      if (room) {
+        room.players = room.players.filter(p => p.id !== socket.id);
+
+        io.to(player.roomCode).emit('room:player-left', {
+          playerId: socket.id,
+          playerName: player.name,
+          room
+        });
+
+        if (room.players.length === 0) {
+          rooms.delete(player.roomCode);
+          console.log(`Room ${player.roomCode} deleted`);
+        }
+      }
+    }
+
+    // Remove from waiting list
+    const waitingIndex = waitingPlayers.indexOf(socket.id);
+    if (waitingIndex > -1) {
+      waitingPlayers.splice(waitingIndex, 1);
     }
 
     players.delete(socket.id);
-    broadcastPlayerList();
-  });
-});
 
-// Helper Functions
-function leaveRoom(socket) {
-  const player = players.get(socket.id);
-  if (!player || !player.currentRoom) return;
-
-  const room = rooms.get(player.currentRoom);
-  if (!room) return;
-
-  // Remove player from room
-  room.players = room.players.filter(p => p.id !== socket.id);
-  socket.leave(player.currentRoom);
-
-  // If room is empty, delete it
-  if (room.players.length === 0) {
-    rooms.delete(player.currentRoom);
-    console.log(`[ROOM DELETED] ${player.currentRoom} (empty)`);
-  } else {
-    // If host left, assign new host
-    if (room.host === socket.id && room.players.length > 0) {
-      room.host = room.players[0].id;
-    }
-
-    // Notify remaining players
-    io.to(player.currentRoom).emit('room:player_left', {
-      playerId: socket.id,
-      playerName: player.name,
-      room: room
+    io.emit('players:online', {
+      count: players.size,
+      players: getOnlinePlayers()
     });
-  }
 
-  player.currentRoom = null;
-  player.status = 'online';
-  
-  broadcastRoomList();
-  broadcastPlayerList();
-}
-
-function resetRoom(roomCode) {
-  const room = rooms.get(roomCode);
-  if (!room) return;
-
-  room.status = 'waiting';
-  room.winner = null;
-  room.gameState = {
-    countdown: 3,
-    startTime: null,
-    playerPositions: {},
-    raceDistance: 800
-  };
-
-  io.to(roomCode).emit('room:reset', { room });
-  console.log(`[ROOM RESET] ${roomCode}`);
-  broadcastRoomList();
-}
-
-function broadcastPlayerList() {
-  const playerList = Array.from(players.values());
-  io.emit('players:online', {
-    count: playerList.length,
-    players: playerList
+    console.log(`Player ${socket.id} disconnected. Total players: ${players.size}`);
   });
-}
-
-function broadcastRoomList() {
-  const roomList = Array.from(rooms.values())
-    .filter(room => room.status === 'waiting')
-    .map(room => ({
-      code: room.code,
-      name: room.name,
-      players: room.players.length,
-      maxPlayers: room.maxPlayers,
-      status: room.status
-    }));
-  
-  io.emit('rooms:list', { rooms: roomList });
-}
-
-// Start Server
-server.listen(port, () => {
-  console.log(`🎮 Poly Race Server running on port ${port}`);
-  console.log(`📡 Socket.IO enabled`);
 });
 
-// Graceful Shutdown
+// API Routes
+app.get('/api/players', (req, res) => {
+  res.json({
+    count: players.size,
+    players: getOnlinePlayers()
+  });
+});
+
+app.get('/api/rooms', (req, res) => {
+  res.json({
+    rooms: Array.from(rooms.values())
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    players: players.size,
+    rooms: rooms.size
+  });
+});
+
+// Serve landing page as default
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'landing.html'));
+});
+
+// Serve game page
+app.get('/game', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+httpServer.listen(port, () => {
+  console.log(`
+╔═══════════════════════════════════════╗
+║     POLY RACE MULTIPLAYER SERVER      ║
+╠═══════════════════════════════════════╣
+║  Server: http://localhost:${port}      ║
+║  Status: ✅ READY                      ║
+╚═══════════════════════════════════════╝
+  `);
+});
+
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down server...');
-  io.close(() => {
-    console.log('✅ Server closed');
+  console.log('\nShutting down server...');
+  httpServer.close(() => {
+    console.log('Server closed');
     process.exit(0);
   });
 });
