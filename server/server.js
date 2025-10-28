@@ -40,9 +40,13 @@ function getOnlinePlayers() {
   }));
 }
 
-// Socket.io connection handling
-io.on('connection', (socket) => {
-  console.log('Player connected:', socket.id);
+  // client is asking for the latest full room snapshot before we go to game.html
+  socket.on('room:sync:request', ({ roomCode }) => {
+    const room = rooms.get(roomCode);
+    if (room) {
+      io.to(roomCode).emit('room:sync', { room });
+    }
+  });
 
   // Player registers with username
   socket.on('player:register', (data) => {
