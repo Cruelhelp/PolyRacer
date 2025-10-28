@@ -566,6 +566,11 @@
       transform: translateX(-4px);
     }
 
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
     @media (max-width: 1024px) {
       .mode-grid {
         grid-template-columns: 1fr;
@@ -602,23 +607,13 @@
       <div class="mode-card practice" data-mode="practice">
         <div class="mode-icon">
           <svg width="80" height="80" viewBox="0 0 80 80">
-            <!-- Single running character -->
             <g transform="translate(25, 15)">
-              <!-- Head -->
               <circle cx="15" cy="10" r="5" fill="currentColor" opacity="0.6"/>
-
-              <!-- Body -->
               <rect x="12" y="15" width="6" height="12" fill="currentColor" opacity="0.5"/>
-
-              <!-- Running legs (one forward, one back) -->
               <line x1="15" y1="27" x2="10" y2="38" stroke="currentColor" stroke-width="3" opacity="0.5"/>
               <line x1="15" y1="27" x2="20" y2="38" stroke="currentColor" stroke-width="3" opacity="0.5"/>
-
-              <!-- Running arms (opposite of legs) -->
               <line x1="12" y1="18" x2="7" y2="28" stroke="currentColor" stroke-width="2.5" opacity="0.5"/>
               <line x1="18" y1="18" x2="23" y2="28" stroke="currentColor" stroke-width="2.5" opacity="0.5"/>
-
-              <!-- Motion lines -->
               <line x1="0" y1="20" x2="8" y2="20" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
               <line x1="2" y1="25" x2="9" y2="25" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
             </g>
@@ -633,7 +628,6 @@
       <div class="mode-card local" data-mode="local">
         <div class="mode-icon">
           <svg width="80" height="80" viewBox="0 0 80 80">
-            <!-- Runner 1 (Left) -->
             <g transform="translate(5, 20)">
               <circle cx="10" cy="8" r="4" fill="currentColor" opacity="0.6"/>
               <rect x="8" y="12" width="4" height="10" fill="currentColor" opacity="0.5"/>
@@ -642,11 +636,7 @@
               <line x1="8" y1="15" x2="4" y2="23" stroke="currentColor" stroke-width="2" opacity="0.5"/>
               <line x1="12" y1="15" x2="16" y2="23" stroke="currentColor" stroke-width="2" opacity="0.5"/>
             </g>
-
-            <!-- VS Text -->
             <text x="40" y="45" font-size="12" fill="currentColor" text-anchor="middle" font-weight="900" opacity="0.7">VS</text>
-
-            <!-- Runner 2 (Right) -->
             <g transform="translate(50, 20)">
               <circle cx="10" cy="8" r="4" fill="currentColor" opacity="0.6"/>
               <rect x="8" y="12" width="4" height="10" fill="currentColor" opacity="0.5"/>
@@ -666,7 +656,6 @@
       <div class="mode-card online" data-mode="online">
         <div class="mode-icon">
           <svg width="80" height="80" viewBox="0 0 80 80">
-            <!-- Runner -->
             <g transform="translate(10, 30)">
               <circle cx="10" cy="8" r="4" fill="currentColor" opacity="0.6"/>
               <rect x="8" y="12" width="4" height="10" fill="currentColor" opacity="0.5"/>
@@ -675,8 +664,6 @@
               <line x1="8" y1="15" x2="4" y2="23" stroke="currentColor" stroke-width="2" opacity="0.5"/>
               <line x1="12" y1="15" x2="16" y2="23" stroke="currentColor" stroke-width="2" opacity="0.5"/>
             </g>
-
-            <!-- Internet/Globe Icon -->
             <g transform="translate(45, 25)">
               <circle cx="12" cy="15" r="13" fill="none" stroke="currentColor" stroke-width="2" opacity="0.6"/>
               <ellipse cx="12" cy="15" rx="6" ry="13" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
@@ -699,21 +686,18 @@
     <p class="subtitle" id="selected-game-mode-text">Choose your challenge type</p>
 
     <div class="typing-mode-grid">
-      <!-- Single Letter -->
       <div class="typing-mode-card" data-typing-mode="single">
         <div class="typing-mode-icon">A</div>
         <h3 class="typing-mode-title">SINGLE LETTER</h3>
         <p class="typing-mode-desc">Type individual letters as they appear</p>
       </div>
 
-      <!-- Double Letter -->
       <div class="typing-mode-card" data-typing-mode="double">
         <div class="typing-mode-icon">AB</div>
         <h3 class="typing-mode-title">DOUBLE LETTER</h3>
         <p class="typing-mode-desc">Type two-letter combinations</p>
       </div>
 
-      <!-- Words -->
       <div class="typing-mode-card" data-typing-mode="words">
         <div class="typing-mode-icon">
           <svg width="60" height="60" viewBox="0 0 60 60">
@@ -724,7 +708,6 @@
         <p class="typing-mode-desc">Type complete words quickly</p>
       </div>
 
-      <!-- Story Mode -->
       <div class="typing-mode-card" data-typing-mode="story">
         <div class="typing-mode-icon">
           <svg width="60" height="60" viewBox="0 0 60 60">
@@ -739,7 +722,6 @@
         <p class="typing-mode-desc">Type sentences and paragraphs</p>
       </div>
 
-      <!-- Custom -->
       <div class="typing-mode-card" data-typing-mode="custom">
         <div class="typing-mode-icon">
           <svg width="60" height="60" viewBox="0 0 60 60">
@@ -804,7 +786,6 @@
         <h3 style="color: var(--cyan); font-size: 1.2rem; margin-bottom: 20px; letter-spacing: 3px;">AVAILABLE ROOMS</h3>
 
         <div class="room-list" id="room-list">
-          <!-- Rooms will be dynamically added here -->
           <div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.4);">
             <p>No active rooms. Create one to start racing!</p>
           </div>
@@ -865,13 +846,17 @@
     </div>
   </div>
 
+  <!-- Load Socket.IO -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
   <script>
     // State management
     const state = {
       currentMode: null,
       selectedTypingMode: null,
       username: 'Player' + Math.floor(Math.random() * 10000),
-      currentRoom: null
+      currentRoom: null,
+      playerId: null
     };
 
     // Mode selection (Practice, Local, Online)
@@ -881,23 +866,20 @@
         state.currentMode = mode;
 
         if (mode === 'online') {
-          // For online mode, skip typing selection and go straight to lobby
           document.getElementById('mode-selection').style.display = 'none';
           document.getElementById('online-lobby').style.display = 'block';
           connectToLobby();
         } else {
-          // For practice and local, show typing mode selection
           document.getElementById('mode-selection').style.display = 'none';
           document.getElementById('typing-mode-selection').style.display = 'flex';
 
-          // Update subtitle to show selected game mode
           const modeText = mode === 'practice' ? 'PRACTICE MODE' : 'LOCAL 1v1 MODE';
           document.getElementById('selected-game-mode-text').textContent = modeText;
         }
       });
     });
 
-    // Typing mode selection (Single, Double, Words, Story, Custom)
+    // Typing mode selection
     document.querySelectorAll('.typing-mode-card').forEach(card => {
       card.addEventListener('click', () => {
         const typingMode = card.dataset.typingMode;
@@ -911,7 +893,6 @@
       const mode = state.currentMode;
       const typingMode = state.selectedTypingMode;
 
-      // Map typing modes to game types
       let gameType = 'letters';
       if (typingMode === 'single') gameType = 'letters';
       else if (typingMode === 'double') gameType = 'double';
@@ -929,11 +910,6 @@
         setTimeout(() => {
           window.location.href = `game.html?mode=local&players=2&type=${gameType}&race=quick`;
         }, 800);
-      } else if (mode === 'online') {
-        // For online, show lobby with selected typing mode
-        document.getElementById('typing-mode-selection').style.display = 'none';
-        document.getElementById('online-lobby').style.display = 'block';
-        connectToLobby();
       }
     }
 
@@ -944,8 +920,6 @@
       state.currentMode = null;
       state.selectedTypingMode = null;
     });
-
-    // Back to home button - simple direct link (no fade transition)
 
     // Online lobby functionality
     let lobbySocket = null;
@@ -969,7 +943,7 @@
           indicator.style.boxShadow = '0 0 10px #00ff88';
           statusText.textContent = 'CONNECTED';
           statusText.style.color = '#00ff88';
-          statusDetail.textContent = detail || 'Connected to Railway server';
+          statusDetail.textContent = detail || 'Connected to server';
           break;
         case 'disconnected':
           indicator.style.background = '#ff4444';
@@ -993,26 +967,21 @@
     }
 
     function connectToLobby() {
-      updateConnectionStatus('connecting', 'Connecting to Railway server...');
+      updateConnectionStatus('connecting', 'Connecting to server...');
 
-      // Initialize Socket.IO connection (not WebSocket)
       const serverUrl = window.location.host.includes('localhost')
         ? 'http://localhost:3001'
         : window.location.origin;
 
       try {
-        // Load Socket.IO library if not loaded
         if (typeof io === 'undefined') {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.socket.io/4.5.4/socket.io.min.js';
-          script.onload = () => initializeSocket(serverUrl);
-          document.head.appendChild(script);
-        } else {
-          initializeSocket(serverUrl);
+          updateConnectionStatus('error', 'Socket.IO not loaded');
+          return;
         }
+        initializeSocket(serverUrl);
       } catch (error) {
-        console.error('Failed to load Socket.IO:', error);
-        updateConnectionStatus('error', 'Failed to load Socket.IO library');
+        console.error('Failed to connect:', error);
+        updateConnectionStatus('error', 'Failed to connect to server');
       }
     }
 
@@ -1028,7 +997,6 @@
         console.log('Connected to server');
         updateConnectionStatus('connected', `Server: ${serverUrl}`);
 
-        // Register player
         lobbySocket.emit('player:register', {
           name: state.username
         });
@@ -1038,7 +1006,6 @@
         console.log('Player registered:', data);
         state.playerId = data.playerId;
 
-        // Request online players and rooms
         lobbySocket.emit('players:get');
         lobbySocket.emit('rooms:get');
       });
@@ -1053,8 +1020,66 @@
         updatePlayersList(data.players || []);
       });
 
+      lobbySocket.on('rooms:list', (data) => {
+        console.log('Rooms received:', data);
+        updateRoomList(data.rooms || []);
+      });
+
+      lobbySocket.on('room:created', (data) => {
+        console.log('Room created:', data);
+        addChatMessage('System', `Room "${data.roomName}" created with code: ${data.roomCode}`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+        lobbySocket.emit('rooms:get');
+      });
+
+      lobbySocket.on('room:joined', (data) => {
+        console.log('Joined room:', data);
+        state.currentRoom = data.roomCode;
+        addChatMessage('System', `Joined room: ${data.roomCode}`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+        
+        const fadeOverlay = document.getElementById('fade-overlay');
+        fadeOverlay.classList.add('active');
+        setTimeout(() => {
+          window.location.href = `game.html?mode=online&room=${data.roomCode}&username=${state.username}`;
+        }, 800);
+      });
+
+      lobbySocket.on('room:error', (data) => {
+        console.error('Room error:', data);
+        alert(data.message || 'Room error occurred');
+      });
+
       lobbySocket.on('chat:message', (data) => {
         addChatMessage(data.username, data.message, data.timestamp);
+      });
+
+      lobbySocket.on('challenge:received', (data) => {
+        const accept = confirm(`${data.challengerName} has challenged you to a race! Accept?`);
+        if (accept) {
+          lobbySocket.emit('challenge:accept', {
+            challengerId: data.challengerId
+          });
+        } else {
+          lobbySocket.emit('challenge:decline', {
+            challengerId: data.challengerId
+          });
+        }
+      });
+
+      lobbySocket.on('challenge:accepted', (data) => {
+        addChatMessage('System', `Challenge accepted! Joining room ${data.roomCode}...`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+        const fadeOverlay = document.getElementById('fade-overlay');
+        fadeOverlay.classList.add('active');
+        setTimeout(() => {
+          window.location.href = `game.html?mode=online&room=${data.roomCode}&username=${state.username}`;
+        }, 800);
+      });
+
+      lobbySocket.on('challenge:declined', (data) => {
+        addChatMessage('System', `${data.declinerName} declined your challenge.`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+      });
+
+      lobbySocket.on('challenge:error', (data) => {
+        addChatMessage('System', `Challenge error: ${data.message}`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
       });
 
       lobbySocket.on('disconnect', () => {
@@ -1077,32 +1102,6 @@
       });
     }
 
-    function handleLobbyMessage(data) {
-      switch(data.type) {
-        case 'room_list':
-          updateRoomList(data.rooms);
-          break;
-        case 'chat_message':
-          addChatMessage(data.username, data.message);
-          break;
-        case 'room_created':
-          joinRoom(data.roomCode);
-          break;
-        case 'room_joined':
-          joinRoom(data.roomCode);
-          break;
-        case 'error':
-          alert(data.message);
-          break;
-      }
-    }
-
-    function requestRoomList() {
-      if (lobbySocket && lobbySocket.readyState === WebSocket.OPEN) {
-        lobbySocket.send(JSON.stringify({ type: 'get_rooms' }));
-      }
-    }
-
     function updateRoomList(rooms) {
       const roomList = document.getElementById('room-list');
 
@@ -1114,8 +1113,8 @@
       roomList.innerHTML = rooms.map(room => `
         <div class="room-card" onclick="joinRoomByCode('${room.code}')">
           <div class="room-info">
-            <h3>${room.name}</h3>
-            <p>Room Code: ${room.code} • ${room.players}/${room.maxPlayers} Players</p>
+            <h3>${escapeHtml(room.name)}</h3>
+            <p>Room Code: <strong style="color: var(--cyan); letter-spacing: 2px;">${room.code}</strong> • ${room.players}/${room.maxPlayers} Players</p>
           </div>
           <button class="room-join-btn">JOIN</button>
         </div>
@@ -1146,12 +1145,17 @@
         return;
       }
 
-      if (lobbySocket && lobbySocket.readyState === WebSocket.OPEN) {
-        lobbySocket.send(JSON.stringify({
-          type: 'create_room',
+      if (lobbySocket && lobbySocket.connected) {
+        lobbySocket.emit('room:create', {
           roomName: roomName,
-          username: state.username
-        }));
+          maxPlayers: 4,
+          gameSettings: {
+            mode: 'quick',
+            typingMode: 'letters'
+          }
+        });
+      } else {
+        alert('Not connected to server');
       }
 
       document.getElementById('create-room-modal').classList.remove('active');
@@ -1171,22 +1175,13 @@
     });
 
     function joinRoomByCode(roomCode) {
-      if (lobbySocket && lobbySocket.readyState === WebSocket.OPEN) {
-        lobbySocket.send(JSON.stringify({
-          type: 'join_room',
-          roomCode: roomCode,
-          username: state.username
-        }));
+      if (lobbySocket && lobbySocket.connected) {
+        lobbySocket.emit('room:join', {
+          roomCode: roomCode
+        });
+      } else {
+        alert('Not connected to server');
       }
-    }
-
-    function joinRoom(roomCode) {
-      state.currentRoom = roomCode;
-      const fadeOverlay = document.getElementById('fade-overlay');
-      fadeOverlay.classList.add('active');
-      setTimeout(() => {
-        window.location.href = `lobby.html?room=${roomCode}&username=${state.username}`;
-      }, 800);
     }
 
     // Update players list
@@ -1204,8 +1199,8 @@
 
       playersList.innerHTML = players.map(player => {
         const isYou = player.id === state.playerId;
-        const statusColor = player.status === 'in-game' ? '#FFD700' : '#00ff88';
-        const statusText = player.status === 'in-game' ? 'In Game' : 'Online';
+        const statusColor = player.status === 'in-game' ? '#FFD700' : player.status === 'in-room' ? '#ff00ff' : '#00ff88';
+        const statusText = player.status === 'in-game' ? 'In Game' : player.status === 'in-room' ? 'In Room' : 'Online';
 
         return `
           <div style="
@@ -1217,17 +1212,15 @@
             background: ${isYou ? 'rgba(0, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'};
             border: 1px solid ${isYou ? 'rgba(0, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)'};
             border-radius: 4px;
-            cursor: ${isYou || player.status === 'in-game' ? 'default' : 'pointer'};
+            cursor: ${isYou || player.status !== 'online' ? 'default' : 'pointer'};
             transition: all 0.2s ease;
           "
-          ${!isYou && player.status !== 'in-game' ? `onclick="challengePlayer('${player.id}', '${escapeHtml(player.name)}')"` : ''}
-          ${!isYou && player.status !== 'in-game' ? `onmouseover="this.style.background='rgba(255, 0, 255, 0.1)'; this.style.borderColor='rgba(255, 0, 255, 0.3)'"` : ''}
-          ${!isYou && player.status !== 'in-game' ? `onmouseout="this.style.background='rgba(255, 255, 255, 0.03)'; this.style.borderColor='rgba(255, 255, 255, 0.1)'"` : ''}
+          ${!isYou && player.status === 'online' ? `onclick="challengePlayer('${player.id}', '${escapeHtml(player.name)}')"` : ''}
+          ${!isYou && player.status === 'online' ? `onmouseover="this.style.background='rgba(255, 0, 255, 0.1)'; this.style.borderColor='rgba(255, 0, 255, 0.3)'"` : ''}
+          ${!isYou && player.status === 'online' ? `onmouseout="this.style.background='rgba(255, 255, 255, 0.03)'; this.style.borderColor='rgba(255, 255, 255, 0.1)'"` : ''}
           >
-            <!-- Status Indicator -->
             <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; box-shadow: 0 0 6px ${statusColor};"></div>
 
-            <!-- Player Info -->
             <div style="flex: 1; min-width: 0;">
               <div style="font-size: 0.85rem; font-weight: 600; color: ${isYou ? 'var(--cyan)' : '#fff'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 ${escapeHtml(player.name)}${isYou ? ' (You)' : ''}
@@ -1237,8 +1230,7 @@
               </div>
             </div>
 
-            <!-- Challenge Button -->
-            ${!isYou && player.status !== 'in-game' ? `
+            ${!isYou && player.status === 'online' ? `
               <div style="font-size: 0.7rem; color: var(--magenta); padding: 4px 8px; background: rgba(255, 0, 255, 0.1); border-radius: 3px; white-space: nowrap;">
                 Challenge
               </div>
@@ -1250,7 +1242,7 @@
 
     function challengePlayer(playerId, playerName) {
       if (!lobbySocket || !lobbySocket.connected) {
-        addChatMessage('System', 'Not connected to server', 'error');
+        addChatMessage('System', 'Not connected to server', new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
         return;
       }
 
@@ -1262,45 +1254,19 @@
       }
     }
 
-    // Challenge events
-    if (typeof lobbySocket !== 'undefined' && lobbySocket) {
-      lobbySocket.on('challenge:received', (data) => {
-        const accept = confirm(`${data.challengerName} has challenged you to a race! Accept?`);
-        if (accept) {
-          lobbySocket.emit('challenge:accept', {
-            challengerId: data.challengerId
-          });
-        } else {
-          lobbySocket.emit('challenge:decline', {
-            challengerId: data.challengerId
-          });
-        }
-      });
-
-      lobbySocket.on('challenge:sent', (data) => {
-        addChatMessage('System', `Challenge sent to ${data.targetName}. Waiting for response...`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
-      });
-
-      lobbySocket.on('challenge:accepted', (data) => {
-        addChatMessage('System', `Challenge accepted! Joining room ${data.roomCode}...`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
-        // TODO: Navigate to game room
-      });
-
-      lobbySocket.on('challenge:declined', (data) => {
-        addChatMessage('System', `${data.declinerName} declined your challenge.`, new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
-      });
-
-      lobbySocket.on('challenge:error', (data) => {
-        addChatMessage('System', `Challenge error: ${data.message}`, 'error');
-      });
-    }
-
     // Refresh players list every 5 seconds
     setInterval(() => {
       if (lobbySocket && lobbySocket.connected && document.getElementById('online-lobby').style.display === 'block') {
         lobbySocket.emit('players:get');
       }
     }, 5000);
+
+    // Refresh room list every 10 seconds
+    setInterval(() => {
+      if (lobbySocket && lobbySocket.connected && document.getElementById('online-lobby').style.display === 'block') {
+        lobbySocket.emit('rooms:get');
+      }
+    }, 10000);
 
     // Chat functionality
     document.getElementById('chat-send').addEventListener('click', sendChatMessage);
@@ -1322,7 +1288,7 @@
           message: message
         });
       } else {
-        addChatMessage('System', 'Not connected to server', 'error');
+        addChatMessage('System', 'Not connected to server', new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
       }
 
       input.value = '';
@@ -1333,7 +1299,7 @@
       const messageEl = document.createElement('div');
       messageEl.className = 'chat-message';
 
-      const timeStr = timestamp && timestamp !== 'error' ?
+      const timeStr = timestamp ?
         `<span style="color: rgba(255, 255, 255, 0.3); font-size: 0.7rem; margin-left: 8px;">${timestamp}</span>` : '';
 
       messageEl.innerHTML = `
@@ -1350,13 +1316,6 @@
       div.textContent = text;
       return div.innerHTML;
     }
-
-    // Refresh room list every 5 seconds
-    setInterval(() => {
-      if (document.getElementById('online-lobby').style.display === 'block') {
-        requestRoomList();
-      }
-    }, 5000);
   </script>
 </body>
 </html>
