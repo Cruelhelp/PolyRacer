@@ -1685,48 +1685,56 @@ const game=new GameWorld();
 game.addScene(PolyRaceScene);
 game.startScene("PolyRace");
 
-    // ============================================
-// Multiplayer Sync (Online Mode)
+// ============================================
+// Multiplayer Sync (Fixed Version)
 // ============================================
 
-// Only activate if online mode
 const urlParams = new URLSearchParams(window.location.search);
 const mode = urlParams.get("mode");
 if (mode === "online") {
-  const socket = io(); // assumes socket.io script is loaded globally
+  const socket = io();
   const roomCode = urlParams.get("room");
   const playerName = localStorage.getItem("playerName") || "Player";
 
-  // --- Join the room ---
-  socket.emit("room:join", { roomCode, username: playerName });
+  // Join the room
+  socket.emit("player:register", { name: playerName });
+  socket.emit("room:join", { roomCode });
 
-  // --- Send movement updates ---
+  // --- Send live updates ---
   setInterval(() => {
-    if (!game.current_scene || game.current_scene.STATE !== "running") return;
-    const me = game.current_scene.players[0]; // assume player[0] = me
+    const scene = game.current_scene;
+    if (!scene || scene.STATE !== "running") return;
 
+    const me = scene.players[0];
     socket.emit("player:update", {
-      roomCode,
-      positionX: me.body.position.x,
+      position: me.body.position.x,
+      progress: me.progressPercent,
       score: me.score,
       combo: me.combo,
-      progress: me.progressPercent,
     });
-  }, 100); // send 10x per second
+  }, 100);
 
-  // --- Receive opponent updates ---
-  socket.on("player:update", (data) => {
+  // --- Receive live updates (from server’s game:update broadcast) ---
+  socket.on("game:update", (data) => {
     const scene = game.current_scene;
-    if (!scene || scene.players.length < 2) return;
+    if (!scene || !data.players) return;
 
-    const opponent = scene.players[1]; // assume 1v1 for now
-    opponent.body.position.x = data.positionX;
-    opponent.score = data.score;
-    opponent.combo = data.combo;
-    opponent.progressPercent = data.progress;
+    const localId = socket.id;
+    const others = data.players.filter(p => p.id !== localId);
+
+    // Only update opponents, not ourselves
+    others.forEach((p, index) => {
+      const opponent = scene.players[index + 1];
+      if (!opponent) return;
+
+      opponent.body.position.x = p.position || opponent.body.position.x;
+      opponent.progressPercent = p.progress || 0;
+      opponent.score = p.score || 0;
+      opponent.combo = p.combo || 0;
+    });
   });
 
-  // --- Handle countdown/start sync from server ---
+  // --- Countdown + Start sync ---
   socket.on("game:countdown", () => {
     const scene = game.current_scene;
     if (scene && scene.STATE === "menu") scene.startCountdown();
@@ -1739,7 +1747,17 @@ if (mode === "online") {
       scene.STATE = "running";
     }
   });
+
+  socket.on("game:finished", (data) => {
+    const scene = game.current_scene;
+    if (scene && scene.STATE === "running") {
+      scene.STATE = "win";
+      scene.winner = data.winner ? scene.players.findIndex(p => p.id === data.winner.id) : 0;
+      scene.showWinScreen();
+    }
+  });
 }
+
 
   </script>
 </body>
