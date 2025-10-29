@@ -196,27 +196,32 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player ready
-  socket.on('player:ready', () => {
-    const player = players.get(socket.id);
-    if (!player || !player.roomCode) return;
-    const room = rooms.get(player.roomCode);
-    if (!room) return;
+  // Player ready (fixed)
+socket.on('player:ready', () => {
+  const player = players.get(socket.id);
+  if (!player || !player.roomCode) return;
+  const room = rooms.get(player.roomCode);
+  if (!room) return;
 
-    const rp = room.players.find(p => p.id === socket.id);
-    if (rp) rp.ready = true;
+  const rp = room.players.find(p => p.id === socket.id);
+  if (rp) rp.ready = true;
 
-    io.to(player.roomCode).emit('room:updated', { room });
-    if (room.players.every(p => p.ready)) {
-      room.gameState = 'countdown';
-      io.to(player.roomCode).emit('game:countdown', { room });
-      setTimeout(() => {
-        room.gameState = 'playing';
-        room.startTime = Date.now();
-        io.to(player.roomCode).emit('game:start', { room });
-      }, 3000);
-    }
-  });
+  // Update everyone in the room
+  io.to(player.roomCode).emit('room:updated', { room });
+
+  // ✅ Only start if both are ready AND game is still in waiting state
+  if (room.gameState === 'waiting' && room.players.length >= 2 && room.players.every(p => p.ready)) {
+    room.gameState = 'countdown';
+    io.to(player.roomCode).emit('game:countdown', { room });
+
+    setTimeout(() => {
+      room.gameState = 'playing';
+      room.startTime = Date.now();
+      io.to(player.roomCode).emit('game:start', { room });
+    }, 3000);
+  }
+});
+
 
   // Player update
   socket.on('player:update', (data) => {
