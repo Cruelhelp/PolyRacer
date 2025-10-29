@@ -40,13 +40,20 @@ function getOnlinePlayers() {
   }));
 }
 
-  // client is asking for the latest full room snapshot before we go to game.html
+// --- SOCKET CONNECTION HANDLER ---
+io.on('connection', (socket) => {
+  console.log('Player connected:', socket.id);
+
+  // --- SYNC PATCH ---
   socket.on('room:sync:request', ({ roomCode }) => {
     const room = rooms.get(roomCode);
     if (room) {
-      io.to(roomCode).emit('room:sync', { room });
+      socket.emit('room:sync', { room });
+    } else {
+      socket.emit('room:error', { message: 'Room not found' });
     }
   });
+  // --- END PATCH ---
 
   // Player registers with username
   socket.on('player:register', (data) => {
@@ -65,7 +72,6 @@ function getOnlinePlayers() {
       playerData
     });
 
-    // Broadcast updated player count
     io.emit('players:online', {
       count: players.size,
       players: getOnlinePlayers()
@@ -95,52 +101,31 @@ function getOnlinePlayers() {
         combo: 0,
         ready: false
       }],
-      gameState: 'waiting', // waiting, countdown, playing, finished
+      gameState: 'waiting',
       winner: null,
       createdAt: Date.now()
     };
 
     rooms.set(roomCode, room);
     socket.join(roomCode);
-
     player.roomCode = roomCode;
     player.inGame = true;
 
-    socket.emit('room:created', {
-      roomCode,
-      room
-    });
-
+    socket.emit('room:created', { roomCode, room });
     console.log(`Room ${roomCode} created by ${player.name}`);
   });
 
-  // Join existing room
+  // Join room
   socket.on('room:join', (data) => {
     const { roomCode } = data;
     const room = rooms.get(roomCode);
     const player = players.get(socket.id);
 
-    if (!player) {
-      socket.emit('room:error', { message: 'Player not registered' });
-      return;
-    }
+    if (!player) return socket.emit('room:error', { message: 'Player not registered' });
+    if (!room) return socket.emit('room:error', { message: 'Room not found' });
+    if (room.players.length >= 2) return socket.emit('room:error', { message: 'Room is full' });
+    if (room.gameState !== 'waiting') return socket.emit('room:error', { message: 'Game already started' });
 
-    if (!room) {
-      socket.emit('room:error', { message: 'Room not found' });
-      return;
-    }
-
-    if (room.players.length >= 2) {
-      socket.emit('room:error', { message: 'Room is full' });
-      return;
-    }
-
-    if (room.gameState !== 'waiting') {
-      socket.emit('room:error', { message: 'Game already started' });
-      return;
-    }
-
-    // Add player to room
     room.players.push({
       id: socket.id,
       name: player.name,
@@ -156,29 +141,18 @@ function getOnlinePlayers() {
     player.inGame = true;
 
     socket.emit('room:joined', { roomCode, room });
-
-    // Notify all players in room
-    io.to(roomCode).emit('room:updated', {
-      room,
-      playerCount: room.players.length
-    });
-
+    io.to(roomCode).emit('room:updated', { room, playerCount: room.players.length });
     console.log(`${player.name} joined room ${roomCode}`);
   });
 
   // Random matchmaking
   socket.on('match:random', () => {
     const player = players.get(socket.id);
-    if (!player) {
-      socket.emit('room:error', { message: 'Player not registered' });
-      return;
-    }
+    if (!player) return socket.emit('room:error', { message: 'Player not registered' });
 
-    // Check if there's a waiting player
     if (waitingPlayers.length > 0) {
       const opponentId = waitingPlayers.shift();
       const opponent = players.get(opponentId);
-
       if (!opponent) {
         socket.emit('match:searching');
         waitingPlayers.push(socket.id);
@@ -190,24 +164,8 @@ function getOnlinePlayers() {
         code: roomCode,
         host: opponentId,
         players: [
-          {
-            id: opponentId,
-            name: opponent.name,
-            position: 0,
-            progress: 0,
-            score: 0,
-            combo: 0,
-            ready: false
-          },
-          {
-            id: socket.id,
-            name: player.name,
-            position: 0,
-            progress: 0,
-            score: 0,
-            combo: 0,
-            ready: false
-          }
+          { id: opponentId, name: opponent.name, position: 0, progress: 0, score: 0, combo: 0, ready: false },
+          { id: socket.id, name: player.name, position: 0, progress: 0, score: 0, combo: 0, ready: false }
         ],
         gameState: 'waiting',
         winner: null,
@@ -215,8 +173,6 @@ function getOnlinePlayers() {
       };
 
       rooms.set(roomCode, room);
-
-      // Add both players to room
       io.sockets.sockets.get(opponentId)?.join(roomCode);
       socket.join(roomCode);
 
@@ -225,56 +181,35 @@ function getOnlinePlayers() {
       player.roomCode = roomCode;
       player.inGame = true;
 
-      // Notify both players
       io.to(roomCode).emit('match:found', { roomCode, room });
-
       console.log(`Match created: ${roomCode} (${opponent.name} vs ${player.name})`);
     } else {
-      // Add to waiting list
       waitingPlayers.push(socket.id);
       socket.emit('match:searching');
-
-      // Timeout after 30 seconds
       setTimeout(() => {
-        const index = waitingPlayers.indexOf(socket.id);
-        if (index > -1) {
-          waitingPlayers.splice(index, 1);
+        const i = waitingPlayers.indexOf(socket.id);
+        if (i > -1) {
+          waitingPlayers.splice(i, 1);
           socket.emit('match:timeout');
         }
       }, 30000);
     }
   });
 
-  // Get all online players
-  socket.on('players:get', () => {
-    socket.emit('players:list', {
-      players: getOnlinePlayers()
-    });
-  });
-
-  // Player ready status
+  // Player ready
   socket.on('player:ready', () => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
-
     const room = rooms.get(player.roomCode);
     if (!room) return;
 
-    const roomPlayer = room.players.find(p => p.id === socket.id);
-    if (roomPlayer) {
-      roomPlayer.ready = true;
-    }
+    const rp = room.players.find(p => p.id === socket.id);
+    if (rp) rp.ready = true;
 
-    // Notify room
     io.to(player.roomCode).emit('room:updated', { room });
-
-    // Check if all players ready
     if (room.players.every(p => p.ready)) {
-      // Start countdown
       room.gameState = 'countdown';
       io.to(player.roomCode).emit('game:countdown', { room });
-
-      // After 3 seconds, start game
       setTimeout(() => {
         room.gameState = 'playing';
         room.startTime = Date.now();
@@ -283,33 +218,27 @@ function getOnlinePlayers() {
     }
   });
 
-  // Update player game state
+  // Player update
   socket.on('player:update', (data) => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
-
     const room = rooms.get(player.roomCode);
     if (!room || room.gameState !== 'playing') return;
 
-    const roomPlayer = room.players.find(p => p.id === socket.id);
-    if (roomPlayer) {
-      roomPlayer.position = data.position;
-      roomPlayer.progress = data.progress;
-      roomPlayer.score = data.score;
-      roomPlayer.combo = data.combo;
+    const rp = room.players.find(p => p.id === socket.id);
+    if (rp) {
+      rp.position = data.position;
+      rp.progress = data.progress;
+      rp.score = data.score;
+      rp.combo = data.combo;
     }
-
-    // Broadcast to all players in room
-    io.to(player.roomCode).emit('game:update', {
-      players: room.players
-    });
+    io.to(player.roomCode).emit('game:update', { players: room.players });
   });
 
-  // Player finished race
-  socket.on('player:finished', (data) => {
+  // Player finished
+  socket.on('player:finished', () => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
-
     const room = rooms.get(player.roomCode);
     if (!room || room.gameState !== 'playing') return;
 
@@ -318,19 +247,11 @@ function getOnlinePlayers() {
       room.gameState = 'finished';
       room.endTime = Date.now();
       room.raceTime = ((room.endTime - room.startTime) / 1000).toFixed(1);
-
-      const winnerPlayer = room.players.find(p => p.id === socket.id);
-
+      const wp = room.players.find(p => p.id === socket.id);
       io.to(player.roomCode).emit('game:finished', {
-        winner: {
-          id: socket.id,
-          name: player.name,
-          score: winnerPlayer?.score || 0,
-          time: room.raceTime
-        },
+        winner: { id: socket.id, name: player.name, score: wp?.score || 0, time: room.raceTime },
         room
       });
-
       console.log(`${player.name} won in room ${player.roomCode}`);
     }
   });
@@ -339,117 +260,77 @@ function getOnlinePlayers() {
   socket.on('room:leave', () => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
-
     const room = rooms.get(player.roomCode);
     if (room) {
       room.players = room.players.filter(p => p.id !== socket.id);
-
-      // Notify remaining players
       io.to(player.roomCode).emit('room:player-left', {
         playerId: socket.id,
         playerName: player.name,
         room
       });
-
-      // Delete room if empty
       if (room.players.length === 0) {
         rooms.delete(player.roomCode);
         console.log(`Room ${player.roomCode} deleted`);
       }
     }
-
     socket.leave(player.roomCode);
     player.roomCode = null;
     player.inGame = false;
   });
 
-  // Global chat message
+  // Chat
   socket.on('chat:send', (data) => {
     const player = players.get(socket.id);
     if (!player) return;
-
-    const timestamp = new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    // Broadcast message to all connected players
-    io.emit('chat:message', {
-      username: data.username || player.name,
-      message: data.message,
-      timestamp: timestamp
-    });
-
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    io.emit('chat:message', { username: data.username || player.name, message: data.message, timestamp });
     console.log(`[CHAT] ${player.name}: ${data.message}`);
   });
 
-  // Player disconnects
+  // Disconnect
   socket.on('disconnect', () => {
     const player = players.get(socket.id);
-
     if (player && player.roomCode) {
       const room = rooms.get(player.roomCode);
       if (room) {
         room.players = room.players.filter(p => p.id !== socket.id);
-
         io.to(player.roomCode).emit('room:player-left', {
           playerId: socket.id,
           playerName: player.name,
           room
         });
-
         if (room.players.length === 0) {
           rooms.delete(player.roomCode);
           console.log(`Room ${player.roomCode} deleted`);
         }
       }
     }
-
-    // Remove from waiting list
-    const waitingIndex = waitingPlayers.indexOf(socket.id);
-    if (waitingIndex > -1) {
-      waitingPlayers.splice(waitingIndex, 1);
-    }
-
+    const i = waitingPlayers.indexOf(socket.id);
+    if (i > -1) waitingPlayers.splice(i, 1);
     players.delete(socket.id);
-
-    io.emit('players:online', {
-      count: players.size,
-      players: getOnlinePlayers()
-    });
-
+    io.emit('players:online', { count: players.size, players: getOnlinePlayers() });
     console.log(`Player ${socket.id} disconnected. Total players: ${players.size}`);
   });
 });
 
-// API Routes
+// API routes
 app.get('/api/players', (req, res) => {
-  res.json({
-    count: players.size,
-    players: getOnlinePlayers()
-  });
+  res.json({ count: players.size, players: getOnlinePlayers() });
 });
 
 app.get('/api/rooms', (req, res) => {
-  res.json({
-    rooms: Array.from(rooms.values())
-  });
+  res.json({ rooms: Array.from(rooms.values()) });
 });
 
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    players: players.size,
-    rooms: rooms.size
-  });
+  res.json({ status: 'ok', players: players.size, rooms: rooms.size });
 });
 
-// Serve landing page as default
+// Serve pages
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'landing.html'));
 });
 
-// Serve game page
 app.get('/game', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
