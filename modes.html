@@ -1298,6 +1298,17 @@
       div.textContent = text;
       return div.innerHTML;
     }
+
+    // When the game is ready to start, redirect both players
+lobbySocket.on('game:redirect', (data) => {
+  console.log('Redirecting to game for room:', data.roomCode);
+  const fadeOverlay = document.getElementById('fade-overlay');
+  fadeOverlay.classList.add('active');
+  setTimeout(() => {
+    window.location.href = `game.html?mode=online&room=${data.roomCode}`;
+  }, 800);
+});
+
   </script>
 </body>
 </html>
