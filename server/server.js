@@ -232,22 +232,33 @@ room.players.forEach(p => {
 });
 
 
-  // Player update
-  socket.on('player:update', (data) => {
-    const player = players.get(socket.id);
-    if (!player || !player.roomCode) return;
-    const room = rooms.get(player.roomCode);
-    if (!room || room.gameState !== 'playing') return;
+// ✅ Multiplayer Sync Patch — ensures live movement is seen by both players
+socket.on('player:update', (data) => {
+  const player = players.get(socket.id);
+  if (!player || !player.roomCode) return;
+  const room = rooms.get(player.roomCode);
+  if (!room || room.gameState !== 'playing') return;
 
-    const rp = room.players.find(p => p.id === socket.id);
-    if (rp) {
-      rp.position = data.position;
-      rp.progress = data.progress;
-      rp.score = data.score;
-      rp.combo = data.combo;
-    }
-    io.to(player.roomCode).emit('game:update', { players: room.players });
+  // Update this player’s state
+  const rp = room.players.find(p => p.id === socket.id);
+  if (rp) {
+    rp.position = data.positionX ?? data.position ?? 0;
+    rp.progress = data.progress ?? 0;
+    rp.score = data.score ?? 0;
+    rp.combo = data.combo ?? 0;
+  }
+
+  // ✅ Send this player’s new state to everyone *except* the sender
+  socket.to(player.roomCode).emit('player:update', {
+    id: socket.id,
+    positionX: rp.position,
+    score: rp.score,
+    combo: rp.combo,
+    progress: rp.progress,
   });
+});
+
+
 
   // Player finished
   socket.on('player:finished', () => {
