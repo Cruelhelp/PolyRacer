@@ -34,7 +34,7 @@ function generateRoomCode() {
 
 function getOnlinePlayers() {
   return Array.from(players.values()).map(p => ({
-    id: p.id,
+    socketId: p.socketId,
     name: p.name,
     status: p.inGame ? 'in-game' : 'online'
   }));
@@ -58,9 +58,8 @@ io.on('connection', (socket) => {
   // Player registers with username
   socket.on('player:register', (data) => {
     const playerData = {
-      id: socket.id,
-      name: data.name,
       socketId: socket.id,
+      name: data.name,
       inGame: false,
       roomCode: null
     };
@@ -93,7 +92,7 @@ io.on('connection', (socket) => {
       code: roomCode,
       host: socket.id,
       players: [{
-        id: socket.id,
+        socketId: socket.id,
         name: player.name,
         position: 0,
         progress: 0,
@@ -127,7 +126,7 @@ io.on('connection', (socket) => {
     if (room.gameState !== 'waiting') return socket.emit('room:error', { message: 'Game already started' });
 
     room.players.push({
-      id: socket.id,
+      socketId: socket.id,
       name: player.name,
       position: 0,
       progress: 0,
@@ -164,8 +163,8 @@ io.on('connection', (socket) => {
         code: roomCode,
         host: opponentId,
         players: [
-          { id: opponentId, name: opponent.name, position: 0, progress: 0, score: 0, combo: 0, ready: false },
-          { id: socket.id, name: player.name, position: 0, progress: 0, score: 0, combo: 0, ready: false }
+          { socketId: opponentId, name: opponent.name, position: 0, progress: 0, score: 0, combo: 0, ready: false },
+          { socketId: socket.id, name: player.name, position: 0, progress: 0, score: 0, combo: 0, ready: false }
         ],
         gameState: 'waiting',
         winner: null,
@@ -196,69 +195,75 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player ready (fixed)
-socket.on('player:ready', () => {
-  const player = players.get(socket.id);
-  if (!player || !player.roomCode) return;
-  const room = rooms.get(player.roomCode);
-  if (!room) return;
+  // Player ready
+  socket.on('player:ready', () => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+    const room = rooms.get(player.roomCode);
+    if (!room) return;
 
-  const rp = room.players.find(p => p.id === socket.id);
-  if (rp) rp.ready = true;
+    const rp = room.players.find(p => p.socketId === socket.id);
+    if (rp) rp.ready = true;
 
-  // Update everyone in the room
-  io.to(player.roomCode).emit('game:start', { room });
+    io.to(player.roomCode).emit('game:start', { room });
 
-// ✅ New patch: also notify all players individually to redirect
-room.players.forEach(p => {
-  const playerSocket = io.sockets.sockets.get(p.id);
-  if (playerSocket) {
-    playerSocket.emit('game:redirect', { roomCode: room.code });
-  }
-});
+    // Notify all players to redirect
+    room.players.forEach(p => {
+      const playerSocket = io.sockets.sockets.get(p.socketId);
+      if (playerSocket) {
+        playerSocket.emit('game:redirect', { roomCode: room.code });
+      }
+    });
 
+    if (room.gameState === 'waiting' && room.players.length >= 2 && room.players.every(p => p.ready)) {
+      room.gameState = 'countdown';
+      io.to(player.roomCode).emit('game:countdown', { room });
 
-  // ✅ Only start if both are ready AND game is still in waiting state
-  if (room.gameState === 'waiting' && room.players.length >= 2 && room.players.every(p => p.ready)) {
-    room.gameState = 'countdown';
-    io.to(player.roomCode).emit('game:countdown', { room });
-
-    setTimeout(() => {
-      room.gameState = 'playing';
-      room.startTime = Date.now();
-      io.to(player.roomCode).emit('game:start', { room });
-    }, 3000);
-  }
-});
-
-
-// ✅ Multiplayer Sync Patch — ensures live movement is seen by both players
-socket.on('player:update', (data) => {
-  const player = players.get(socket.id);
-  if (!player || !player.roomCode) return;
-  const room = rooms.get(player.roomCode);
-  if (!room || room.gameState !== 'playing') return;
-
-  // Update this player’s state
-  const rp = room.players.find(p => p.id === socket.id);
-  if (rp) {
-    rp.position = data.positionX ?? data.position ?? 0;
-    rp.progress = data.progress ?? 0;
-    rp.score = data.score ?? 0;
-    rp.combo = data.combo ?? 0;
-  }
-
-  // ✅ Send this player’s new state to everyone *except* the sender
-  socket.to(player.roomCode).emit('player:update', {
-    id: socket.id,
-    positionX: rp.position,
-    score: rp.score,
-    combo: rp.combo,
-    progress: rp.progress,
+      setTimeout(() => {
+        room.gameState = 'playing';
+        room.startTime = Date.now();
+        io.to(player.roomCode).emit('game:start', { room });
+      }, 3000);
+    }
   });
-});
 
+  // Multiplayer sync — live movement updates
+  socket.on('player:update', (data) => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+    const room = rooms.get(player.roomCode);
+    if (!room || room.gameState !== 'playing') return;
 
+    const rp = room.players.find(p => p.socketId === socket.id);
+    if (rp) {
+      rp.position = data.positionX ?? data.position ?? 0;
+      rp.progress = data.progress ?? 0;
+      rp.score = data.score ?? 0;
+      rp.combo = data.combo ?? 0;
+    }
+
+    // Send this player's new state to everyone else
+    socket.to(player.roomCode).emit('player:update', {
+      socketId: socket.id,
+      positionX: rp.position,
+      score: rp.score,
+      combo: rp.combo,
+      progress: rp.progress,
+    });
+
+    // Broadcast full room sync
+    io.to(player.roomCode).emit('game:update', {
+      players: room.players.map(p => ({
+        socketId: p.socketId,
+        name: p.name,
+        position: p.position,
+        progress: p.progress,
+        score: p.score,
+        combo: p.combo
+      })),
+      gameState: room.gameState
+    });
+  });
 
   // Player finished
   socket.on('player:finished', () => {
@@ -272,9 +277,9 @@ socket.on('player:update', (data) => {
       room.gameState = 'finished';
       room.endTime = Date.now();
       room.raceTime = ((room.endTime - room.startTime) / 1000).toFixed(1);
-      const wp = room.players.find(p => p.id === socket.id);
+      const wp = room.players.find(p => p.socketId === socket.id);
       io.to(player.roomCode).emit('game:finished', {
-        winner: { id: socket.id, name: player.name, score: wp?.score || 0, time: room.raceTime },
+        winner: { socketId: socket.id, name: player.name, score: wp?.score || 0, time: room.raceTime },
         room
       });
       console.log(`${player.name} won in room ${player.roomCode}`);
@@ -287,9 +292,9 @@ socket.on('player:update', (data) => {
     if (!player || !player.roomCode) return;
     const room = rooms.get(player.roomCode);
     if (room) {
-      room.players = room.players.filter(p => p.id !== socket.id);
+      room.players = room.players.filter(p => p.socketId !== socket.id);
       io.to(player.roomCode).emit('room:player-left', {
-        playerId: socket.id,
+        socketId: socket.id,
         playerName: player.name,
         room
       });
@@ -318,9 +323,9 @@ socket.on('player:update', (data) => {
     if (player && player.roomCode) {
       const room = rooms.get(player.roomCode);
       if (room) {
-        room.players = room.players.filter(p => p.id !== socket.id);
+        room.players = room.players.filter(p => p.socketId !== socket.id);
         io.to(player.roomCode).emit('room:player-left', {
-          playerId: socket.id,
+          socketId: socket.id,
           playerName: player.name,
           room
         });
