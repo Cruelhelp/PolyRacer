@@ -1020,61 +1020,94 @@
         lobbySocket.emit('rooms:get');
       });
 
-      // PATCH: reliable join -> sync -> redirect
-      lobbySocket.on('room:joined', (data) => {
-        console.log('Joined room:', data);
-        state.currentRoom = data.roomCode;
+// ✅ FIXED: Proper lobby sync and manual start logic (no auto-start redirect)
+lobbySocket.on('room:created', (data) => {
+  console.log('Room created:', data);
+  state.currentRoom = data.roomCode;
 
-        // store info for game.html
-        localStorage.setItem('roomCode', data.roomCode);
-        localStorage.setItem('playerId', state.playerId);
-        localStorage.setItem('playerName', state.username);
+  // Save for later
+  localStorage.setItem('roomCode', data.roomCode);
+  localStorage.setItem('playerId', state.playerId);
+  localStorage.setItem('playerName', state.username);
 
-        addChatMessage('System', `Joined room: ${data.roomCode}`, timestamp());
+  addChatMessage('System', `Room created: ${data.roomCode}`, timestamp());
 
-        // ask server for the current full room snapshot
-        lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
+  // Ask server for room snapshot
+  lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
+});
 
-        // wait until we get authoritative room state before going to game
-        lobbySocket.once('room:sync', (syncData) => {
-          console.log('Room synced:', syncData);
-          localStorage.setItem('roomState', JSON.stringify(syncData.room));
+lobbySocket.on('room:joined', (data) => {
+  console.log('Joined room:', data);
+  state.currentRoom = data.roomCode;
 
-          const fadeOverlay = document.getElementById('fade-overlay');
-          fadeOverlay.classList.add('active');
-          setTimeout(() => {
-            window.location.href = `game.html?mode=online&room=${data.roomCode}`;
-          }, 800);
-        });
-      });
+  // Save info for game session
+  localStorage.setItem('roomCode', data.roomCode);
+  localStorage.setItem('playerId', state.playerId);
+  localStorage.setItem('playerName', state.username);
 
-      lobbySocket.on('room:error', (data) => {
-        console.error('Room error:', data);
-        alert(data.message || 'Room error occurred');
-      });
+  addChatMessage('System', `Joined room: ${data.roomCode}`, timestamp());
 
-      lobbySocket.on('chat:message', (data) => {
-        addChatMessage(data.username, data.message, data.timestamp);
-      });
+  // Ask server for latest full state
+  lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
+});
 
-      lobbySocket.on('disconnect', () => {
-        console.log('Disconnected from server');
-        updateConnectionStatus('disconnected', 'Connection lost. Attempting to reconnect...');
-      });
+// When we receive authoritative room snapshot
+lobbySocket.on('room:sync', (data) => {
+  console.log('Room sync received:', data.room);
+  updateRoomLobbyUI(data.room);
+});
 
-      lobbySocket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-        updateConnectionStatus('error', `Error: ${error.message || 'Unable to connect'}`);
-      });
+// When players toggle ready / leave / join
+lobbySocket.on('room:updated', (data) => {
+  console.log('Room updated:', data.room);
+  updateRoomLobbyUI(data.room);
+});
 
-      lobbySocket.on('reconnect', (attemptNumber) => {
-        console.log('Reconnected after', attemptNumber, 'attempts');
-        updateConnectionStatus('connected', 'Reconnected successfully');
-      });
+// Game countdown phase (triggered when all ready)
+lobbySocket.on('game:countdown', (data) => {
+  console.log('Countdown started');
+  showCountdown(3, () => console.log('Countdown complete'));
+});
 
-      lobbySocket.on('reconnect_failed', () => {
-        updateConnectionStatus('error', 'Failed to reconnect. Please refresh the page.');
-      });
+// Game officially starts
+lobbySocket.on('game:start', (data) => {
+  console.log('Game started for room', data.room.code);
+  const fadeOverlay = document.getElementById('fade-overlay');
+  fadeOverlay.classList.add('active');
+  setTimeout(() => {
+    window.location.href = `game.html?mode=online&room=${data.room.code}`;
+  }, 800);
+});
+
+// --- Error & connection events (unchanged but cleaned) ---
+lobbySocket.on('room:error', (data) => {
+  console.error('Room error:', data);
+  alert(data.message || 'Room error occurred');
+});
+
+lobbySocket.on('chat:message', (data) => {
+  addChatMessage(data.username, data.message, data.timestamp);
+});
+
+lobbySocket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  updateConnectionStatus('disconnected', 'Connection lost. Attempting to reconnect...');
+});
+
+lobbySocket.on('connect_error', (error) => {
+  console.error('Connection error:', error);
+  updateConnectionStatus('error', `Error: ${error.message || 'Unable to connect'}`);
+});
+
+lobbySocket.on('reconnect', (attemptNumber) => {
+  console.log('Reconnected after', attemptNumber, 'attempts');
+  updateConnectionStatus('connected', 'Reconnected successfully');
+});
+
+lobbySocket.on('reconnect_failed', () => {
+  updateConnectionStatus('error', 'Failed to reconnect. Please refresh the page.');
+});
+
     }
 
     function updateRoomList(rooms) {
@@ -1308,6 +1341,86 @@ lobbySocket.on('game:redirect', (data) => {
     window.location.href = `game.html?mode=online&room=${data.roomCode}`;
   }, 800);
 });
+
+    function updateRoomLobbyUI(room) {
+  let lobbyUI = document.getElementById('room-ui');
+  if (!lobbyUI) {
+    lobbyUI = document.createElement('div');
+    lobbyUI.id = 'room-ui';
+    lobbyUI.style.position = 'fixed';
+    lobbyUI.style.top = '50%';
+    lobbyUI.style.left = '50%';
+    lobbyUI.style.transform = 'translate(-50%, -50%)';
+    lobbyUI.style.background = 'rgba(0,0,0,0.9)';
+    lobbyUI.style.border = '2px solid cyan';
+    lobbyUI.style.padding = '30px';
+    lobbyUI.style.borderRadius = '10px';
+    lobbyUI.style.textAlign = 'center';
+    lobbyUI.style.zIndex = '9999';
+    lobbyUI.style.color = '#00ffff';
+    lobbyUI.innerHTML = `
+      <h2 style="letter-spacing:3px;">ROOM ${room.code}</h2>
+      <div id="room-players"></div>
+      <button id="ready-btn" style="
+        margin-top:20px;
+        padding:10px 20px;
+        border:2px solid #00ffff;
+        background:transparent;
+        color:#00ffff;
+        cursor:pointer;
+        font-family:'Orbitron';
+        text-transform:uppercase;
+      ">I'm Ready</button>
+    `;
+    document.body.appendChild(lobbyUI);
+  }
+
+  // update player list
+  const playerContainer = document.getElementById('room-players');
+  playerContainer.innerHTML = room.players.map(p => `
+    <div style="margin:8px 0; font-size:1rem; ${p.ready ? 'color:#00ff88' : 'color:#ff00ff'};">
+      ${p.name} ${p.ready ? '✓ Ready' : '...Waiting'}
+    </div>
+  `).join('');
+
+  // ready button
+  const readyBtn = document.getElementById('ready-btn');
+  readyBtn.onclick = () => {
+    lobbySocket.emit('player:ready');
+    readyBtn.disabled = true;
+    readyBtn.textContent = 'READY ✓';
+  };
+}
+
+function showCountdown(seconds, callback) {
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.background = 'rgba(0,0,0,0.8)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.fontSize = '100px';
+  overlay.style.fontFamily = 'Orbitron, sans-serif';
+  overlay.style.color = '#00ffff';
+  overlay.style.textShadow = '0 0 40px #00ffff';
+  overlay.style.zIndex = '99999';
+  document.body.appendChild(overlay);
+
+  let count = seconds;
+  const timer = setInterval(() => {
+    overlay.textContent = count > 0 ? count : 'GO!';
+    count--;
+    if (count < -1) {
+      clearInterval(timer);
+      document.body.removeChild(overlay);
+      if (callback) callback();
+    }
+  }, 1000);
+}
 
   </script>
 </body>
