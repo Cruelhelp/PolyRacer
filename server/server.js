@@ -207,7 +207,16 @@ socket.on('player:ready', () => {
   if (rp) rp.ready = true;
 
   // Update everyone in the room
-  io.to(player.roomCode).emit('room:updated', { room });
+  io.to(player.roomCode).emit('game:start', { room });
+
+// ✅ New patch: also notify all players individually to redirect
+room.players.forEach(p => {
+  const playerSocket = io.sockets.sockets.get(p.id);
+  if (playerSocket) {
+    playerSocket.emit('game:redirect', { roomCode: room.code });
+  }
+});
+
 
   // ✅ Only start if both are ready AND game is still in waiting state
   if (room.gameState === 'waiting' && room.players.length >= 2 && room.players.every(p => p.ready)) {
