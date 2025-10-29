@@ -1678,87 +1678,93 @@ class GameWorld {
   }
 }
 
-// ============================================
-// Start
-// ============================================
-const game=new GameWorld();
-game.addScene(PolyRaceScene);
-game.startScene("PolyRace");
+  // ============================================
+  // Start Game
+  // ============================================
+  const game = new GameWorld();
+  game.addScene(PolyRaceScene);
+  game.startScene("PolyRace");
+  </script>
 
-// ============================================
-// Multiplayer Sync (Fixed Version)
-// ============================================
+  <!-- ✅ Socket.IO Client Library -->
+  <script src="/socket.io/socket.io.js"></script>
 
-const urlParams = new URLSearchParams(window.location.search);
-const mode = urlParams.get("mode");
-if (mode === "online") {
-  const socket = io();
-  const roomCode = urlParams.get("room");
-  const playerName = localStorage.getItem("playerName") || "Player";
+  <!-- ✅ Multiplayer Sync (FINAL PATCH) -->
+  <script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const mode = urlParams.get("mode");
+  if (mode === "online") {
+    const socket = io();
+    const roomCode = urlParams.get("room");
+    const playerName = localStorage.getItem("playerName") || "Player";
 
-  // Join the room
-  socket.emit("player:register", { name: playerName });
-  socket.emit("room:join", { roomCode });
+    // --- Register and Join ---
+    socket.emit("player:register", { name: playerName });
+    socket.emit("room:join", { roomCode });
 
-  // --- Send live updates ---
-  setInterval(() => {
-    const scene = game.current_scene;
-    if (!scene || scene.STATE !== "running") return;
+    // --- Send live updates ---
+    setInterval(() => {
+      const scene = game.current_scene;
+      if (!scene || scene.STATE !== "running") return;
 
-    const me = scene.players[0];
-    socket.emit("player:update", {
-      position: me.body.position.x,
-      progress: me.progressPercent,
-      score: me.score,
-      combo: me.combo,
+      const me = scene.players[0];
+      socket.emit("player:update", {
+        position: me.body.position.x,
+        progress: me.progressPercent,
+        score: me.score,
+        combo: me.combo,
+      });
+    }, 100);
+
+// --- Receive server updates ---
+socket.on("game:update", (data) => {
+  const scene = game.current_scene;
+  if (!scene || !data.players) return;
+
+  // Find all other players except ourselves
+  const others = data.players.filter(p => p.socketId !== socket.id);
+
+  others.forEach((p, index) => {
+    const opponent = scene.players[index + 1];
+    if (!opponent) return;
+
+    opponent.body.position.x = p.position ?? opponent.body.position.x;
+    opponent.progressPercent = p.progress ?? 0;
+    opponent.score = p.score ?? 0;
+    opponent.combo = p.combo ?? 0;
+  });
+});
+
+
+    // --- Sync Countdown ---
+    socket.on("game:countdown", () => {
+      const scene = game.current_scene;
+      if (scene && scene.STATE === "menu") scene.startCountdown();
     });
-  }, 100);
 
-  // --- Receive live updates (from server’s game:update broadcast) ---
-  socket.on("game:update", (data) => {
-    const scene = game.current_scene;
-    if (!scene || !data.players) return;
-
-    const localId = socket.id;
-    const others = data.players.filter(p => p.id !== localId);
-
-    // Only update opponents, not ourselves
-    others.forEach((p, index) => {
-      const opponent = scene.players[index + 1];
-      if (!opponent) return;
-
-      opponent.body.position.x = p.position || opponent.body.position.x;
-      opponent.progressPercent = p.progress || 0;
-      opponent.score = p.score || 0;
-      opponent.combo = p.combo || 0;
+    socket.on("game:start", () => {
+      const scene = game.current_scene;
+      if (scene && scene.STATE === "countdown") {
+        scene.advanceCountdown();
+        scene.STATE = "running";
+      }
     });
-  });
 
-  // --- Countdown + Start sync ---
-  socket.on("game:countdown", () => {
-    const scene = game.current_scene;
-    if (scene && scene.STATE === "menu") scene.startCountdown();
-  });
+    socket.on("game:finished", (data) => {
+      const scene = game.current_scene;
+      if (scene && scene.STATE === "running") {
+        scene.STATE = "win";
+        scene.winner = data.winner
+          ? scene.players.findIndex(p => p.id === data.winner.id)
+          : 0;
+        scene.showWinScreen();
+      }
+    });
 
-  socket.on("game:start", () => {
-    const scene = game.current_scene;
-    if (scene && scene.STATE === "countdown") {
-      scene.advanceCountdown();
-      scene.STATE = "running";
-    }
-  });
-
-  socket.on("game:finished", (data) => {
-    const scene = game.current_scene;
-    if (scene && scene.STATE === "running") {
-      scene.STATE = "win";
-      scene.winner = data.winner ? scene.players.findIndex(p => p.id === data.winner.id) : 0;
-      scene.showWinScreen();
-    }
-  });
-}
-
-
+    // --- Optional: log events ---
+    socket.on("connect", () => console.log("Connected:", socket.id));
+    socket.on("disconnect", () => console.log("Disconnected from server"));
+  }
   </script>
 </body>
 </html>
