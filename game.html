@@ -311,7 +311,180 @@
       }
     }
 
-    /* Responsive */
+    /* Mobile Touch Controls */
+    #mobile-controls {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.9) 80%, transparent 100%);
+      z-index: 150;
+      pointer-events: none;
+    }
+
+    #mobile-controls.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: all;
+    }
+
+    .mobile-hint {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    /* Home Row Keyboard (for letter modes) */
+    .home-row-keyboard {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 100%;
+      padding: 0 10px;
+    }
+
+    .key-button {
+      padding: 18px 14px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s ease;
+      min-width: 50px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .key-button.active {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: rgba(0, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+      text-shadow: 0 0 10px var(--cyan);
+    }
+
+    .key-button:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 30px var(--cyan);
+    }
+
+    .key-button.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* Full QWERTY Keyboard (for word/story modes) */
+    .full-keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      max-width: 600px;
+      padding: 0 5px;
+    }
+
+    .keyboard-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .full-keyboard .key-button {
+      padding: 14px 8px;
+      font-size: 1.1rem;
+      min-width: 40px;
+      flex: 1;
+      max-width: 50px;
+    }
+
+    .full-keyboard .key-button.space {
+      flex: 3;
+      max-width: none;
+      font-size: 0.8rem;
+    }
+
+    /* Viewport adjustments when keyboard is visible */
+    #game-canvas.keyboard-visible {
+      height: calc(100vh - 280px) !important;
+    }
+
+    @media (max-width: 480px) {
+      .key-button {
+        padding: 15px 10px;
+        font-size: 1.2rem;
+        min-width: 42px;
+      }
+
+      .full-keyboard .key-button {
+        padding: 12px 6px;
+        font-size: 1rem;
+        min-width: 32px;
+        max-width: 42px;
+      }
+
+      #game-canvas.keyboard-visible {
+        height: calc(100vh - 250px) !important;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .key-button {
+        padding: 12px 8px;
+        font-size: 1rem;
+        min-width: 38px;
+        gap: 6px;
+      }
+
+      .full-keyboard .key-button {
+        padding: 10px 4px;
+        font-size: 0.9rem;
+        min-width: 28px;
+        max-width: 38px;
+      }
+    }
+
+    /* Responsive - Mobile First */
+    @media (max-width: 1024px) {
+      #back-btn {
+        top: 15px;
+        left: 15px;
+        padding: 10px 20px;
+        font-size: 0.7rem;
+      }
+
+      .game-title {
+        font-size: 4rem;
+        letter-spacing: 10px;
+      }
+
+      .game-subtitle {
+        font-size: 0.95rem;
+      }
+
+      .stat-value {
+        font-size: 1.3rem;
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
+      }
+    }
+
     @media (max-width: 768px) {
       .game-title {
         font-size: 3rem;
@@ -319,18 +492,183 @@
       }
 
       .game-subtitle {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         letter-spacing: 4px;
       }
 
-      #key-indicator {
+      .game-instruction {
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+      }
+
+      #stats-hud {
+        top: 15px;
         gap: 30px;
-        bottom: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stat-value {
+        font-size: 1.1rem;
+      }
+
+      .stat-label {
+        font-size: 0.65rem;
+      }
+
+      #key-indicator {
+        gap: 20px;
+        bottom: 240px; /* Make room for mobile keyboard */
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      /* Adjust when keyboard is visible */
+      #game-canvas.keyboard-visible ~ #game-hud #key-indicator {
+        bottom: 260px;
       }
 
       .key-display {
-        font-size: 1.8rem;
-        padding: 15px 20px;
+        font-size: 1.5rem;
+        padding: 12px 18px;
+        min-width: 60px;
+      }
+
+      .player-label {
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+      }
+
+      .win-title {
+        font-size: 3rem;
+        letter-spacing: 8px;
+      }
+
+      .win-stats {
+        font-size: 1rem;
+      }
+
+      .win-restart {
+        font-size: 0.8rem;
+      }
+
+      #countdown-display {
+        font-size: 6rem;
+      }
+
+      #back-btn {
+        padding: 8px 16px;
+        font-size: 0.65rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .game-title {
+        font-size: 2.5rem;
+        letter-spacing: 6px;
+      }
+
+      .game-subtitle {
+        font-size: 0.75rem;
+        letter-spacing: 3px;
+      }
+
+      .game-instruction {
+        font-size: 0.7rem;
+      }
+
+      #stats-hud {
+        gap: 15px;
+      }
+
+      .stat-value {
+        font-size: 1rem;
+      }
+
+      .stat-label {
+        font-size: 0.6rem;
+      }
+
+      #key-indicator {
+        gap: 15px;
+        bottom: 220px; /* More room for mobile keyboard */
+      }
+
+      #game-canvas.keyboard-visible ~ #game-hud #key-indicator {
+        bottom: 240px;
+      }
+
+      .key-display {
+        font-size: 1.3rem;
+        padding: 10px 15px;
+        min-width: 50px;
+      }
+
+      .player-label {
+        font-size: 0.6rem;
+      }
+
+      .win-title {
+        font-size: 2.5rem;
+        letter-spacing: 6px;
+      }
+
+      .win-stats {
+        font-size: 0.9rem;
+      }
+
+      .win-restart {
+        font-size: 0.7rem;
+      }
+
+      #countdown-display {
+        font-size: 5rem;
+      }
+
+      .touch-button {
+        padding: 20px 40px;
+        font-size: 1.5rem;
+        min-width: 180px;
+      }
+
+      #back-btn {
+        padding: 6px 12px;
+        font-size: 0.6rem;
+        letter-spacing: 2px;
+      }
+
+      #back-btn svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    /* Landscape mode adjustments */
+    @media (max-width: 900px) and (orientation: landscape) {
+      .game-title {
+        font-size: 2rem;
+        letter-spacing: 6px;
+      }
+
+      .game-subtitle {
+        font-size: 0.7rem;
+        margin-bottom: 1.5rem;
+      }
+
+      #stats-hud {
+        top: 10px;
+        gap: 20px;
+      }
+
+      #key-indicator {
+        bottom: 15px;
+        gap: 15px;
+      }
+
+      .touch-button {
+        bottom: 15px;
+        padding: 15px 35px;
+        font-size: 1.3rem;
       }
     }
   </style>
@@ -365,7 +703,7 @@
     <div id="title-card" style="display: none;">
       <h1 class="game-title">POLY RACE</h1>
       <p class="game-subtitle">Type. Race. Win.</p>
-      <p class="game-instruction">PRESS SPACE TO START</p>
+      <p class="game-instruction" id="start-instruction">PRESS SPACE TO START</p>
     </div>
 
     <!-- Stats HUD (shown during gameplay) -->
@@ -388,9 +726,332 @@
       <p class="win-stats" id="win-time">Time: 0.0s</p>
       <p class="win-stats" id="win-score">Score: 0</p>
       <p class="win-stats" id="win-combo">Max Combo: 0</p>
-      <p class="win-restart">PRESS SPACE TO RESTART</p>
+      <p class="win-restart" id="win-restart-text">PRESS SPACE TO RESTART</p>
     </div>
   </div>
+
+  <!-- Mobile Touch Controls -->
+  <div id="mobile-controls">
+    <div class="mobile-hint" id="mobile-hint">Type to race</div>
+
+    <!-- Home Row Keyboard (for single/double letter modes) -->
+    <div class="home-row-keyboard" id="home-row-keyboard" style="display: none;">
+      <!-- Keys will be dynamically generated -->
+    </div>
+
+    <!-- Full QWERTY Keyboard (for word/story modes) -->
+    <div class="full-keyboard" id="full-keyboard" style="display: none;">
+      <div class="keyboard-row">
+        <button class="key-button" data-key="q">Q</button>
+        <button class="key-button" data-key="w">W</button>
+        <button class="key-button" data-key="e">E</button>
+        <button class="key-button" data-key="r">R</button>
+        <button class="key-button" data-key="t">T</button>
+        <button class="key-button" data-key="y">Y</button>
+        <button class="key-button" data-key="u">U</button>
+        <button class="key-button" data-key="i">I</button>
+        <button class="key-button" data-key="o">O</button>
+        <button class="key-button" data-key="p">P</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key-button" data-key="a">A</button>
+        <button class="key-button" data-key="s">S</button>
+        <button class="key-button" data-key="d">D</button>
+        <button class="key-button" data-key="f">F</button>
+        <button class="key-button" data-key="g">G</button>
+        <button class="key-button" data-key="h">H</button>
+        <button class="key-button" data-key="j">J</button>
+        <button class="key-button" data-key="k">K</button>
+        <button class="key-button" data-key="l">L</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key-button" data-key="z">Z</button>
+        <button class="key-button" data-key="x">X</button>
+        <button class="key-button" data-key="c">C</button>
+        <button class="key-button" data-key="v">V</button>
+        <button class="key-button" data-key="b">B</button>
+        <button class="key-button" data-key="n">N</button>
+        <button class="key-button" data-key="m">M</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key-button space" data-key=" ">SPACE</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+// ============================================
+// Mobile Detection & Touch Controls
+// ============================================
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                 (window.innerWidth <= 768);
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+let mobileControlsActive = isMobile || isTouchDevice;
+
+console.log('[MOBILE] Detection:', { isMobile, isTouchDevice, mobileControlsActive });
+
+// Setup mobile controls if needed
+if (mobileControlsActive) {
+  window.addEventListener('load', () => {
+    const mobileControls = document.getElementById('mobile-controls');
+    const homeRowKeyboard = document.getElementById('home-row-keyboard');
+    const fullKeyboard = document.getElementById('full-keyboard');
+    const gameCanvas = document.getElementById('game-canvas');
+    const winRestartText = document.getElementById('win-restart-text');
+    const startInstruction = document.getElementById('start-instruction');
+    const mobileHint = document.getElementById('mobile-hint');
+
+    if (winRestartText) {
+      winRestartText.textContent = 'TAP ANYWHERE TO RESTART';
+    }
+
+    if (startInstruction) {
+      startInstruction.textContent = 'TAP ANYWHERE TO START';
+    }
+
+    let currentGameType = 'letters'; // letters, double, words, story
+    let homeRowKeys = [];
+    let keyboardInitialized = false;
+
+    // Detect game type from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameType = urlParams.get('type') || 'letters';
+    currentGameType = gameType;
+
+    console.log('[MOBILE] Game type:', currentGameType);
+
+    // Generate home row keyboard for letter modes
+    function generateHomeRowKeyboard() {
+      if (!homeRowKeyboard) return;
+
+      homeRowKeyboard.innerHTML = '';
+
+      // Keys for single/double letter mode (home row + common letters)
+      const keys = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
+      homeRowKeys = keys;
+
+      keys.forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'key-button';
+        btn.setAttribute('data-key', key.toLowerCase());
+        btn.textContent = key;
+        homeRowKeyboard.appendChild(btn);
+      });
+
+      console.log('[MOBILE] Home row keyboard generated');
+    }
+
+    // Setup keyboard based on game type
+    function setupKeyboard() {
+      if (keyboardInitialized) return;
+
+      if (currentGameType === 'letters' || currentGameType === 'double') {
+        // Use home row keyboard
+        generateHomeRowKeyboard();
+        homeRowKeyboard.style.display = 'flex';
+        fullKeyboard.style.display = 'none';
+        mobileHint.textContent = 'TAP THE KEYS TO TYPE';
+      } else {
+        // Use full keyboard for words/story
+        homeRowKeyboard.style.display = 'none';
+        fullKeyboard.style.display = 'flex';
+        mobileHint.textContent = 'USE KEYBOARD TO TYPE';
+      }
+
+      keyboardInitialized = true;
+      console.log('[MOBILE] Keyboard setup complete');
+    }
+
+    // Handle key button press
+    function handleKeyPress(key) {
+      const scene = game?.current_scene;
+      if (!scene || scene.STATE !== "running") return;
+
+      // Simulate key press
+      const keyDownEvent = new KeyboardEvent('keydown', {
+        key: key,
+        code: 'Key' + key.toUpperCase(),
+        bubbles: true
+      });
+      document.dispatchEvent(keyDownEvent);
+
+      // Visual feedback
+      const btn = document.querySelector(`[data-key="${key}"]`);
+      if (btn) {
+        btn.classList.add('active');
+        setTimeout(() => {
+          btn.classList.remove('active');
+        }, 150);
+      }
+
+      // Release key after short delay
+      setTimeout(() => {
+        const keyUpEvent = new KeyboardEvent('keyup', {
+          key: key,
+          code: 'Key' + key.toUpperCase(),
+          bubbles: true
+        });
+        document.dispatchEvent(keyUpEvent);
+      }, 100);
+    }
+
+    // Highlight active key based on current letter needed
+    function updateKeyboardHighlight(scene) {
+      if (!scene || !scene.players || !scene.players[0]) return;
+
+      const player = scene.players[0];
+      let nextKey = '';
+
+      if (player.isWordMode) {
+        nextKey = player.nextKey[player.wordProgress];
+      } else {
+        nextKey = player.nextKey;
+      }
+
+      // Remove all active highlights
+      document.querySelectorAll('.key-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Add active highlight to next key
+      if (nextKey) {
+        const btn = document.querySelector(`[data-key="${nextKey.toLowerCase()}"]`);
+        if (btn) {
+          btn.classList.add('active');
+        }
+      }
+    }
+
+    // Setup event listeners for all keys
+    function setupKeyEventListeners() {
+      document.querySelectorAll('.key-button').forEach(btn => {
+        btn.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          const key = btn.getAttribute('data-key');
+          handleKeyPress(key);
+        });
+
+        // Prevent default behavior
+        btn.addEventListener('touchend', (e) => {
+          e.preventDefault();
+        });
+      });
+    }
+
+    // Show mobile controls during gameplay
+    function updateMobileControls(scene) {
+      if (!scene || !mobileControls) return;
+
+      if (scene.STATE === "running" && scene.players && scene.players[0]) {
+        if (!keyboardInitialized) {
+          setupKeyboard();
+          setupKeyEventListeners();
+        }
+
+        mobileControls.classList.add('active');
+        gameCanvas.classList.add('keyboard-visible');
+
+        // Update keyboard highlight
+        updateKeyboardHighlight(scene);
+
+        // Adjust canvas size for keyboard
+        adjustCanvasForKeyboard();
+      } else {
+        mobileControls.classList.remove('active');
+        gameCanvas.classList.remove('keyboard-visible');
+
+        // Restore canvas size
+        restoreCanvasSize();
+      }
+    }
+
+    // Adjust canvas rendering area when keyboard is visible
+    function adjustCanvasForKeyboard() {
+      const game = window.game;
+      if (!game) return;
+
+      const keyboardHeight = 280; // Height of keyboard
+      const newHeight = window.innerHeight - keyboardHeight;
+
+      if (game.H !== newHeight) {
+        game.H = newHeight;
+        game.canvas.height = newHeight;
+
+        // Update scene dimensions
+        const scene = game.current_scene;
+        if (scene) {
+          scene.world.H = newHeight;
+        }
+
+        console.log('[MOBILE] Canvas adjusted for keyboard:', newHeight);
+      }
+    }
+
+    // Restore canvas to full size
+    function restoreCanvasSize() {
+      const game = window.game;
+      if (!game) return;
+
+      const fullHeight = window.innerHeight;
+
+      if (game.H !== fullHeight) {
+        game.H = fullHeight;
+        game.canvas.height = fullHeight;
+
+        // Update scene dimensions
+        const scene = game.current_scene;
+        if (scene) {
+          scene.world.H = fullHeight;
+        }
+
+        console.log('[MOBILE] Canvas restored to full size:', fullHeight);
+      }
+    }
+
+    // Update controls in game loop
+    setInterval(() => {
+      const scene = game?.current_scene;
+      if (scene) {
+        updateMobileControls(scene);
+      }
+    }, 100);
+
+    // Handle menu/win state taps - WAIT FOR USER INTERACTION
+    let canStartGame = false;
+
+    // Wait a moment before allowing game start (prevents auto-start)
+    setTimeout(() => {
+      canStartGame = true;
+      console.log('[MOBILE] Ready to start game');
+    }, 1000);
+
+    document.getElementById('game-canvas').addEventListener('touchstart', (e) => {
+      const scene = game?.current_scene;
+      if (!scene) return;
+
+      // Only allow start if enough time has passed
+      if (scene.STATE === "menu" && canStartGame) {
+        e.preventDefault();
+        console.log('[MOBILE] Starting countdown via tap');
+        scene.startCountdown();
+        canStartGame = false; // Prevent multiple taps
+      } else if (scene.STATE === "win" && scene.canRestart) {
+        e.preventDefault();
+        console.log('[MOBILE] Restarting game via tap');
+        game.startScene("PolyRace");
+        canStartGame = false;
+        // Re-enable after delay
+        setTimeout(() => {
+          canStartGame = true;
+        }, 1000);
+      }
+    });
+
+    console.log('[MOBILE] Controls initialized');
+  });
+}
+  </script>
 
   <script>
 // Fade in effect on page load
@@ -531,6 +1192,9 @@ class Runner extends Entity {
 
     // Champion status
     this.hasChampionStatus = false;
+
+    // Finish tracking (for multiplayer)
+    this.hasFinished = false;
   }
 
   getNewKey(){
@@ -668,13 +1332,24 @@ class Runner extends Entity {
     const target = this.scene.raceDistancePixels;
     this.progressPercent = Math.min(100, (progress / target) * 100);
 
-    if(progress >= target){
+    if(progress >= target && !this.hasFinished){
+      this.hasFinished = true; // Prevent multiple finish emissions
+
       this.scene.STATE="win";
       this.scene.winner=this.scene.players.indexOf(this);
       this.scene.winnerStats = {
         score: this.score,
         maxCombo: this.maxCombo
       };
+
+      // Emit finish event in online mode (handled by multiplayer script)
+      if(this.scene.selectedMode === "online" && this.playerNum === 1) {
+        console.log("[MULTIPLAYER] Local player finished!");
+        // The socket emit is handled in the multiplayer script section
+        if(window.multiplayerSocket) {
+          window.multiplayerSocket.emit("player:finished");
+        }
+      }
     }
   }
 
@@ -1002,6 +1677,12 @@ class Runner extends Entity {
   }
 
   drawHUD(ctx){
+    // Only draw HUD for player 1 (local player) in online mode
+    const scene = this.scene;
+    if(scene.selectedMode === "online" && this.playerNum !== 1) {
+      return; // Don't draw letters for opponents in online mode
+    }
+
     ctx.save();
     const pos = this.body.position;
 
@@ -1290,7 +1971,13 @@ PolyRaceScene.updateUIState=function(){
 PolyRaceScene.updateKeyIndicator=function(){
   const indicator = document.getElementById('key-indicator');
   if(this.STATE === "running") {
-    indicator.innerHTML = this.players.map((p, i) => {
+    // In online mode, only show local player's key (player 1)
+    const playersToShow = this.selectedMode === "online" ? [this.players[0]] : this.players;
+
+    indicator.innerHTML = playersToShow.map((p, i) => {
+      if (!p) return '';
+
+      const actualIndex = this.selectedMode === "online" ? 0 : i;
       let displayKey;
       let isPressed;
 
@@ -1304,7 +1991,7 @@ PolyRaceScene.updateKeyIndicator=function(){
 
       return `
         <div class="player-keys">
-          <div class="player-label" style="color: ${p.color}">PLAYER ${i+1}</div>
+          <div class="player-label" style="color: ${p.color}">${this.selectedMode === "online" ? 'YOU' : 'PLAYER ' + (actualIndex+1)}</div>
           <div class="key-display ${isPressed ? 'pressed' : ''}" style="color: ${p.color}; border-color: ${p.color}">
             ${displayKey}
           </div>
@@ -1599,11 +2286,62 @@ PolyRaceScene.render=function(){
   ctx.save();
   ctx.translate(-this.cameraX, 0);
   this.players.forEach(p=>p.draw());
+
+  // Draw usernames in online mode
+  if (this.selectedMode === "online" && this.STATE === "running") {
+    this.players.forEach(p => this.drawUsername(p));
+  }
+
   ctx.restore();
 
   if(this.STATE === "win" && !this.canRestart){
     this.showWinScreen();
   }
+};
+
+PolyRaceScene.drawUsername=function(player){
+  if (!player || !player.username) return;
+
+  const ctx = this.ctx;
+  const pos = player.body.position;
+
+  ctx.save();
+
+  // Position above player's head (150px higher than letters)
+  const usernameY = pos.y - 180;
+
+  // Background for better readability
+  ctx.font = "bold 16px 'Orbitron'";
+  ctx.textAlign = "center";
+  const textWidth = ctx.measureText(player.username).width;
+  const padding = 8;
+
+  // Draw background
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(
+    pos.x - textWidth/2 - padding,
+    usernameY - 14,
+    textWidth + padding * 2,
+    22
+  );
+
+  // Draw border
+  ctx.strokeStyle = player.color;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(
+    pos.x - textWidth/2 - padding,
+    usernameY - 14,
+    textWidth + padding * 2,
+    22
+  );
+
+  // Draw username text
+  ctx.fillStyle = player.color;
+  ctx.shadowColor = player.color;
+  ctx.shadowBlur = 10;
+  ctx.fillText(player.username, pos.x, usernameY);
+
+  ctx.restore();
 };
 
 // ============================================
@@ -1689,82 +2427,294 @@ class GameWorld {
   <!-- ✅ Socket.IO Client Library -->
   <script src="/socket.io/socket.io.js"></script>
 
-  <!-- ✅ Multiplayer Sync (FINAL PATCH) -->
+  <!-- ✅ IMPROVED Multiplayer Sync -->
   <script>
   const urlParams = new URLSearchParams(window.location.search);
   const mode = urlParams.get("mode");
   if (mode === "online") {
-    const socket = io();
+    // Connect to server
+    const serverUrl = window.location.origin;
+    const socket = io(serverUrl, {
+      transports: ['websocket', 'polling'],
+      reconnection: true
+    });
+
+    // Make socket globally accessible for game logic
+    window.multiplayerSocket = socket;
+
     const roomCode = urlParams.get("room");
-    const playerName = localStorage.getItem("playerName") || "Player";
+    const playerName = localStorage.getItem("playerName") || "Player" + Math.floor(Math.random() * 10000);
+    let mySocketId = null;
+    let myPlayerIndex = 0; // 0 or 1 based on join order
+    let myColor = '#00ffff'; // Default cyan
+    let opponentColor = '#ff00ff'; // Default magenta
+
+    console.log(`[MULTIPLAYER] Connecting to ${serverUrl} for room ${roomCode}`);
 
     // --- Register and Join ---
-    socket.emit("player:register", { name: playerName });
-    socket.emit("room:join", { roomCode });
+    socket.on("connect", () => {
+      console.log("[MULTIPLAYER] Connected:", socket.id);
+      mySocketId = socket.id;
 
-    // --- Send live updates ---
-    setInterval(() => {
+      socket.emit("player:register", { name: playerName });
+      socket.emit("room:join", { roomCode });
+    });
+
+    // Get room info after joining to determine player colors
+    socket.on("room:joined", (data) => {
+      console.log("[MULTIPLAYER] Joined room:", data);
+      if (data.room && data.room.players) {
+        // Find my index in the room
+        myPlayerIndex = data.room.players.findIndex(p => p.socketId === mySocketId);
+
+        // Assign colors based on position
+        const colors = ['#00ffff', '#ff00ff'];
+        myColor = colors[myPlayerIndex] || '#00ffff';
+        opponentColor = colors[1 - myPlayerIndex] || '#ff00ff';
+
+        console.log(`[MULTIPLAYER] I am player ${myPlayerIndex + 1} with color ${myColor}`);
+        console.log(`[MULTIPLAYER] Opponent has color ${opponentColor}`);
+
+        // Update player colors and usernames in the scene
+        const scene = game?.current_scene;
+        if (scene && scene.players) {
+          const myPlayer = data.room.players[myPlayerIndex];
+          const opponentPlayer = data.room.players[1 - myPlayerIndex];
+
+          if (scene.players[0] && myPlayer) {
+            scene.players[0].color = myColor;
+            scene.players[0].username = myPlayer.name;
+          }
+          if (scene.players[1] && opponentPlayer) {
+            scene.players[1].color = opponentColor;
+            scene.players[1].username = opponentPlayer.name;
+          }
+          console.log("[MULTIPLAYER] Updated player colors and usernames in scene");
+        }
+      }
+    });
+
+    socket.on("room:sync", (data) => {
+      console.log("[MULTIPLAYER] Room sync:", data);
+      if (data.room && data.room.players) {
+        myPlayerIndex = data.room.players.findIndex(p => p.socketId === mySocketId);
+        const colors = ['#00ffff', '#ff00ff'];
+        myColor = colors[myPlayerIndex] || '#00ffff';
+        opponentColor = colors[1 - myPlayerIndex] || '#ff00ff';
+
+        // Update player colors and usernames
+        const scene = game?.current_scene;
+        if (scene && scene.players) {
+          const myPlayer = data.room.players[myPlayerIndex];
+          const opponentPlayer = data.room.players[1 - myPlayerIndex];
+
+          if (scene.players[0] && myPlayer) {
+            scene.players[0].color = myColor;
+            scene.players[0].username = myPlayer.name;
+          }
+          if (scene.players[1] && opponentPlayer) {
+            scene.players[1].color = opponentColor;
+            scene.players[1].username = opponentPlayer.name;
+          }
+        }
+      }
+    });
+
+    // --- Send live updates (60fps throttled to ~10 updates/sec) ---
+    let lastUpdateTime = 0;
+    const UPDATE_INTERVAL = 100; // ms
+
+    function sendUpdate() {
+      const now = Date.now();
+      if (now - lastUpdateTime < UPDATE_INTERVAL) return;
+      lastUpdateTime = now;
+
       const scene = game.current_scene;
       if (!scene || scene.STATE !== "running") return;
 
-      const me = scene.players[0];
+      const me = scene.players[0]; // Local player is always index 0
+      if (!me) return;
+
       socket.emit("player:update", {
         position: me.body.position.x,
         progress: me.progressPercent,
         score: me.score,
         combo: me.combo,
+        animTime: me.animTime,
+        velocity: me.body.velocity.x
       });
-    }, 100);
+    }
 
-// --- Receive server updates ---
-socket.on("game:update", (data) => {
-  const scene = game.current_scene;
-  if (!scene || !data.players) return;
+    // Send updates on requestAnimationFrame for smooth sync
+    function updateLoop() {
+      sendUpdate();
+      requestAnimationFrame(updateLoop);
+    }
+    updateLoop();
 
-  // Find all other players except ourselves
-  const others = data.players.filter(p => p.socketId !== socket.id);
+    // --- Receive server updates ---
+    socket.on("game:update", (data) => {
+      const scene = game.current_scene;
+      if (!scene || !data.players || !mySocketId) return;
 
-  others.forEach((p, index) => {
-    const opponent = scene.players[index + 1];
-    if (!opponent) return;
+      // Find opponent data (player that is NOT me)
+      const opponentData = data.players.find(p => p.socketId !== mySocketId);
+      if (!opponentData) return;
 
-    opponent.body.position.x = p.position ?? opponent.body.position.x;
-    opponent.progressPercent = p.progress ?? 0;
-    opponent.score = p.score ?? 0;
-    opponent.combo = p.combo ?? 0;
-  });
-});
+      // Update opponent (player index 1)
+      const opponent = scene.players[1];
+      if (!opponent) return;
 
+      // Smooth interpolation for position
+      const targetX = opponentData.position ?? opponent.body.position.x;
+      opponent.body.position.x += (targetX - opponent.body.position.x) * 0.3;
+
+      // Direct update for other properties
+      opponent.progressPercent = opponentData.progress ?? 0;
+      opponent.score = opponentData.score ?? 0;
+      opponent.combo = opponentData.combo ?? 0;
+
+      // Sync animation
+      if (opponentData.animTime !== undefined) {
+        opponent.animTime = opponentData.animTime;
+      }
+      if (opponentData.velocity !== undefined) {
+        opponent.body.velocity.x = opponentData.velocity;
+      }
+    });
 
     // --- Sync Countdown ---
     socket.on("game:countdown", () => {
       const scene = game.current_scene;
-      if (scene && scene.STATE === "menu") scene.startCountdown();
+      console.log("[MULTIPLAYER] Countdown event received, scene state:", scene?.STATE);
+
+      if (scene) {
+        // Force start countdown if not already started
+        if (scene.STATE === "menu" || scene.STATE === "countdown") {
+          console.log("[MULTIPLAYER] Starting countdown animation");
+          scene.STATE = "countdown";
+          scene.countIndex = 0;
+          scene.countStart = new Date();
+          scene.updateUIState();
+        }
+      }
     });
 
     socket.on("game:start", () => {
       const scene = game.current_scene;
-      if (scene && scene.STATE === "countdown") {
-        scene.advanceCountdown();
+      if (scene) {
+        console.log("[MULTIPLAYER] Game start signal received! Starting race...");
+
+        // Force the game to running state
         scene.STATE = "running";
+        scene.raceStartTime = Date.now();
+        scene.updateUIState();
+
+        console.log("[MULTIPLAYER] Race started!");
       }
     });
 
+    // --- Handle win state ---
     socket.on("game:finished", (data) => {
       const scene = game.current_scene;
       if (scene && scene.STATE === "running") {
+        console.log("[MULTIPLAYER] Game finished!", data);
         scene.STATE = "win";
-        scene.winner = data.winner
-          ? scene.players.findIndex(p => p.id === data.winner.id)
-          : 0;
+
+        // Determine winner index
+        if (data.winner && data.winner.socketId) {
+          scene.winner = data.winner.socketId === mySocketId ? 0 : 1;
+        } else {
+          scene.winner = 0;
+        }
+
+        scene.winnerStats = {
+          score: data.winner?.score || 0,
+          maxCombo: scene.players[scene.winner]?.maxCombo || 0
+        };
+
         scene.showWinScreen();
       }
     });
 
-    // --- Optional: log events ---
-    socket.on("connect", () => console.log("Connected:", socket.id));
-    socket.on("disconnect", () => console.log("Disconnected from server"));
+    // --- Error handling ---
+    socket.on("room:error", (data) => {
+      console.error("[MULTIPLAYER] Room error:", data.message);
+      alert("Room error: " + (data.message || "Unknown error"));
+      window.location.href = "modes.html";
+    });
+
+    socket.on("disconnect", () => {
+      console.log("[MULTIPLAYER] Disconnected from server");
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("[MULTIPLAYER] Connection error:", error);
+    });
+
+    // Handle when someone finishes
+    window.addEventListener('beforeunload', () => {
+      const scene = game.current_scene;
+      if (scene && scene.STATE === "running") {
+        const me = scene.players[0];
+        if (me && me.progressPercent >= 100) {
+          socket.emit("player:finished");
+        }
+      }
+    });
   }
+  </script>
+
+  <!-- Global online tracking (for all game modes) -->
+  <script>
+    // Only create background connection if NOT in online multiplayer mode
+    const urlParams2 = new URLSearchParams(window.location.search);
+    const gameMode = urlParams2.get("mode");
+
+    if (gameMode !== "online") {
+      // Track as online for solo/local games
+      (function() {
+        const serverUrl = 'https://polyracer-production.up.railway.app';
+
+        // Generate or get stored anonymous ID
+        let anonymousId = localStorage.getItem('anonymousId');
+        if (!anonymousId) {
+          anonymousId = 'Guest_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('anonymousId', anonymousId);
+        }
+
+        try {
+          const backgroundSocket = io(serverUrl, {
+            transports: ['websocket', 'polling'],
+            reconnection: true
+          });
+
+          backgroundSocket.on('connect', () => {
+            console.log('[GAME] Background connection established:', backgroundSocket.id);
+
+            // Register as a visitor
+            backgroundSocket.emit('player:register', {
+              name: anonymousId,
+              isVisitor: true
+            });
+          });
+
+          backgroundSocket.on('disconnect', () => {
+            console.log('[GAME] Background disconnected');
+          });
+
+          // Cleanup on page unload
+          window.addEventListener('beforeunload', () => {
+            if (backgroundSocket && backgroundSocket.connected) {
+              backgroundSocket.disconnect();
+            }
+          });
+
+        } catch (error) {
+          console.error('[GAME] Background connection failed:', error);
+        }
+      })();
+    }
   </script>
 </body>
 </html>
