@@ -1229,6 +1229,7 @@
       const joinCode = urlParams.get('join');
 
       if (joinCode) {
+        console.log('[AUTO-JOIN] Invite link detected. Room code:', joinCode);
         // Auto-open online lobby and attempt to join
         state.currentMode = 'online';
         document.getElementById('mode-selection').style.display = 'none';
@@ -1236,11 +1237,23 @@
         connectToLobby();
 
         // Wait for connection then auto-join
-        setTimeout(() => {
-          if (lobbySocket && lobbySocket.connected) {
+        let attemptCount = 0;
+        const maxAttempts = 10;
+        const attemptInterval = setInterval(() => {
+          attemptCount++;
+
+          if (lobbySocket && lobbySocket.connected && state.playerId) {
+            console.log('[AUTO-JOIN] Socket connected! Attempting to join room:', joinCode.toUpperCase());
+            clearInterval(attemptInterval);
             lobbySocket.emit('room:join', { roomCode: joinCode.toUpperCase() });
+          } else if (attemptCount >= maxAttempts) {
+            console.error('[AUTO-JOIN] Failed to connect after', maxAttempts, 'attempts');
+            clearInterval(attemptInterval);
+            alert('Failed to connect to server. Please try again or check if the room still exists.');
+          } else {
+            console.log('[AUTO-JOIN] Waiting for connection... Attempt', attemptCount, '/', maxAttempts);
           }
-        }, 1500);
+        }, 500);
       }
     });
 
@@ -1598,7 +1611,15 @@ lobbySocket.on('game:start', (data) => {
 // --- Error & connection events (unchanged but cleaned) ---
 lobbySocket.on('room:error', (data) => {
   console.error('Room error:', data);
-  alert(data.message || 'Room error occurred');
+
+  let errorMsg = data.message || 'Room error occurred';
+
+  // Add helpful context for common errors
+  if (errorMsg === 'Room not found') {
+    errorMsg += '\n\nThe room may have:\n• Expired due to inactivity\n• Been created on a different server\n• Already been deleted\n\nTry creating a new room instead.';
+  }
+
+  alert(errorMsg);
 });
 
 lobbySocket.on('chat:message', (data) => {
