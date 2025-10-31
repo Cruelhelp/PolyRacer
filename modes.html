@@ -571,18 +571,320 @@
       50% { opacity: 0.5; }
     }
 
+    /* Mobile Responsive */
     @media (max-width: 1024px) {
       .mode-grid {
         grid-template-columns: 1fr;
         gap: 20px;
+        padding: 0 15px;
       }
 
       .lobby-container {
         grid-template-columns: 1fr;
+        padding: 0 15px;
       }
 
       .title {
         font-size: 2.5rem;
+        letter-spacing: 8px;
+      }
+
+      .subtitle {
+        font-size: 0.9rem;
+      }
+
+      #back-home {
+        top: 15px;
+        left: 15px;
+        padding: 10px 20px;
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      html, body {
+        overflow-x: hidden;
+      }
+
+      .container {
+        padding: 30px 15px;
+      }
+
+      .title {
+        font-size: 2rem;
+        letter-spacing: 6px;
+      }
+
+      .subtitle {
+        font-size: 0.8rem;
+        letter-spacing: 3px;
+        margin-bottom: 2.5rem;
+      }
+
+      .mode-grid {
+        gap: 15px;
+      }
+
+      .mode-card {
+        min-height: 250px;
+        padding: 30px 20px;
+      }
+
+      .mode-title {
+        font-size: 1.3rem;
+        letter-spacing: 3px;
+      }
+
+      .mode-desc {
+        font-size: 0.8rem;
+      }
+
+      .typing-mode-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .typing-mode-card {
+        min-height: 180px;
+        padding: 25px 15px;
+      }
+
+      .typing-mode-icon {
+        font-size: 2.5rem;
+      }
+
+      .typing-mode-title {
+        font-size: 1rem;
+        letter-spacing: 2px;
+      }
+
+      .back-btn {
+        bottom: 20px;
+        padding: 12px 28px;
+        font-size: 0.8rem;
+      }
+
+      /* Lobby responsive */
+      .lobby-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        height: auto;
+      }
+
+      .lobby-main, .lobby-chat {
+        padding: 20px;
+        max-height: none;
+      }
+
+      .section-title {
+        font-size: 1.4rem;
+        letter-spacing: 4px;
+        margin-bottom: 20px;
+      }
+
+      .lobby-actions {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .action-btn {
+        padding: 16px;
+        font-size: 0.85rem;
+      }
+
+      #connection-status {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 15px;
+        text-align: center;
+      }
+
+      #status-text {
+        font-size: 0.8rem;
+      }
+
+      #status-detail {
+        font-size: 0.65rem;
+      }
+
+      #players-online-count {
+        font-size: 0.7rem;
+      }
+
+      .room-card {
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px;
+      }
+
+      .room-join-btn {
+        width: 100%;
+        padding: 10px 20px;
+      }
+
+      /* Modal responsive */
+      .modal {
+        min-width: 90%;
+        max-width: 400px;
+        padding: 30px 20px;
+      }
+
+      .modal-title {
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+      }
+
+      .modal-input {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .modal-btn {
+        width: 100%;
+        padding: 12px;
+      }
+
+      /* Chat responsive */
+      .chat-messages {
+        max-height: 250px;
+      }
+
+      .chat-message {
+        font-size: 0.8rem;
+      }
+
+      .chat-input {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+      }
+
+      .chat-send {
+        padding: 10px 18px;
+        font-size: 0.8rem;
+      }
+
+      /* Players list */
+      #players-list {
+        max-height: 150px;
+      }
+
+      /* Room UI Modal */
+      #room-ui {
+        min-width: 90% !important;
+        max-width: 95% !important;
+        padding: 25px 20px !important;
+        font-size: 0.9rem;
+      }
+
+      #room-ui h2 {
+        font-size: 1.5rem !important;
+        margin-bottom: 20px !important;
+      }
+
+      #invite-link-input {
+        font-size: 0.75rem !important;
+        padding: 10px 12px !important;
+      }
+
+      #copy-link-btn {
+        padding: 10px 18px !important;
+        font-size: 0.75rem !important;
+      }
+
+      #ready-btn {
+        padding: 12px 32px !important;
+        font-size: 0.85rem !important;
+      }
+
+      #leave-room-btn {
+        padding: 8px 20px !important;
+        font-size: 0.75rem !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .title {
+        font-size: 1.8rem;
+        letter-spacing: 4px;
+      }
+
+      .subtitle {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+      }
+
+      .mode-card {
+        min-height: 220px;
+        padding: 25px 15px;
+      }
+
+      .mode-title {
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+      }
+
+      .mode-desc {
+        font-size: 0.75rem;
+      }
+
+      .mode-players {
+        font-size: 0.7rem;
+      }
+
+      .typing-mode-card {
+        min-height: 160px;
+        padding: 20px 12px;
+      }
+
+      .typing-mode-icon {
+        font-size: 2rem;
+      }
+
+      .typing-mode-title {
+        font-size: 0.9rem;
+      }
+
+      .typing-mode-desc {
+        font-size: 0.7rem;
+      }
+
+      #back-home {
+        padding: 8px 16px;
+        font-size: 0.7rem;
+      }
+
+      .section-title {
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+      }
+
+      .action-btn {
+        font-size: 0.8rem;
+      }
+
+      #room-ui h2 {
+        font-size: 1.3rem !important;
+      }
+    }
+
+    /* Touch-friendly buttons */
+    @media (hover: none) and (pointer: coarse) {
+      .mode-card, .action-btn, .room-join-btn, .modal-btn, .chat-send {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mode-card:active {
+        transform: scale(0.98);
+      }
+
+      .action-btn:active, .modal-btn:active {
+        transform: scale(0.96);
       }
     }
   </style>
@@ -590,12 +892,12 @@
 <body>
   <div id="fade-overlay"></div>
 
-  <a href="index.html" id="back-home">
+  <button id="back-home">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M19 12H5M12 19l-7-7 7-7"/>
     </svg>
-    HOME
-  </a>
+    <span id="back-text">HOME</span>
+  </button>
 
   <!-- Mode Selection Screen -->
   <div class="container" id="mode-selection">
@@ -754,6 +1056,44 @@
       <div class="lobby-main">
         <h2 class="section-title">ONLINE LOBBY</h2>
 
+        <!-- Username Section -->
+        <div id="username-section" style="margin-bottom: 20px; padding: 15px 20px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 4px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="flex: 1;">
+              <label style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 2px; display: block; margin-bottom: 8px;">YOUR USERNAME</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="text" id="username-input" maxlength="20" placeholder="Enter username..." style="
+                  flex: 1;
+                  padding: 10px 15px;
+                  font-family: 'Orbitron', sans-serif;
+                  font-size: 0.9rem;
+                  background: rgba(0, 0, 0, 0.6);
+                  border: 2px solid rgba(0, 255, 255, 0.3);
+                  color: var(--cyan);
+                  border-radius: 4px;
+                  outline: none;
+                  font-weight: 600;
+                  letter-spacing: 1px;
+                ">
+                <button id="change-username-btn" style="
+                  padding: 10px 20px;
+                  font-family: 'Orbitron', sans-serif;
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                  letter-spacing: 2px;
+                  background: transparent;
+                  border: 2px solid var(--cyan);
+                  color: var(--cyan);
+                  cursor: pointer;
+                  border-radius: 4px;
+                  transition: all 0.3s ease;
+                  white-space: nowrap;
+                ">CHANGE</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Connection Status -->
         <div id="connection-status" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px 20px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px;">
           <div id="status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 10px currentColor; animation: pulse 2s ease-in-out infinite;"></div>
@@ -829,7 +1169,9 @@
   <!-- Create Room Modal -->
   <div class="modal" id="create-room-modal">
     <h2 class="modal-title">CREATE ROOM</h2>
-    <input type="text" class="modal-input" id="room-name-input" placeholder="Enter room name..." maxlength="30">
+    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 25px; letter-spacing: 1px;">
+      A room will be created with a unique code that you can share with your friend
+    </p>
     <div class="modal-buttons">
       <button class="modal-btn primary" id="confirm-create-room">CREATE</button>
       <button class="modal-btn secondary" id="cancel-create-room">CANCEL</button>
@@ -846,6 +1188,25 @@
     </div>
   </div>
 
+  <!-- Custom Confirmation Modal -->
+  <div class="modal" id="custom-confirm-modal">
+    <h2 class="modal-title" id="confirm-title">CONFIRM</h2>
+    <p id="confirm-message" style="color: rgba(255,255,255,0.8); font-size: 0.95rem; line-height: 1.6; margin: 20px 0; text-align: center;"></p>
+    <div class="modal-buttons">
+      <button class="modal-btn primary" id="confirm-yes">YES</button>
+      <button class="modal-btn secondary" id="confirm-no">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- Custom Alert Modal -->
+  <div class="modal" id="custom-alert-modal">
+    <h2 class="modal-title" id="alert-title">NOTICE</h2>
+    <p id="alert-message" style="color: rgba(255,255,255,0.8); font-size: 0.95rem; line-height: 1.6; margin: 20px 0; text-align: center;"></p>
+    <div class="modal-buttons">
+      <button class="modal-btn primary" id="alert-ok">OK</button>
+    </div>
+  </div>
+
   <!-- Load Socket.IO -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
@@ -854,10 +1215,89 @@
     const state = {
       currentMode: null,
       selectedTypingMode: null,
-      username: 'Player' + Math.floor(Math.random() * 10000),
+      username: localStorage.getItem('username') || 'Player' + Math.floor(Math.random() * 10000),
       currentRoom: null,
       playerId: null
     };
+
+    // Save username to localStorage
+    localStorage.setItem('username', state.username);
+
+    // Check for auto-join from invite link
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const joinCode = urlParams.get('join');
+
+      if (joinCode) {
+        // Auto-open online lobby and attempt to join
+        state.currentMode = 'online';
+        document.getElementById('mode-selection').style.display = 'none';
+        document.getElementById('online-lobby').style.display = 'block';
+        connectToLobby();
+
+        // Wait for connection then auto-join
+        setTimeout(() => {
+          if (lobbySocket && lobbySocket.connected) {
+            lobbySocket.emit('room:join', { roomCode: joinCode.toUpperCase() });
+          }
+        }, 1500);
+      }
+    });
+
+    // Back button handler
+    const backButton = document.getElementById('back-home');
+    const backText = document.getElementById('back-text');
+    const modeSelection = document.getElementById('mode-selection');
+    const typingModeSelection = document.getElementById('typing-mode-selection');
+    const onlineLobby = document.getElementById('online-lobby');
+
+    function updateBackButton() {
+      // Check if mode selection screen is hidden (meaning we're on a sub-screen)
+      if (modeSelection && modeSelection.style.display === 'none') {
+        // On any sub-screen (typing mode selection or online lobby) - go back to modes
+        backText.textContent = 'MODES';
+      } else {
+        // On main mode selection screen - go to home
+        backText.textContent = 'HOME';
+      }
+    }
+
+    backButton.addEventListener('click', () => {
+      const fadeOverlay = document.getElementById('fade-overlay');
+
+      // Check if we're on the main mode selection screen
+      if (modeSelection.style.display === 'none') {
+        // We're on a sub-screen, go back to mode selection
+
+        // Disconnect from lobby if in online mode
+        if (lobbySocket && lobbySocket.connected) {
+          lobbySocket.disconnect();
+        }
+
+        fadeOverlay.classList.add('active');
+        setTimeout(() => {
+          // Hide all sub-screens
+          if (typingModeSelection) typingModeSelection.style.display = 'none';
+          if (onlineLobby) onlineLobby.style.display = 'none';
+
+          // Show mode selection
+          modeSelection.style.display = 'block';
+
+          fadeOverlay.classList.remove('active');
+          state.currentRoom = null;
+          updateBackButton();
+        }, 300);
+      } else {
+        // We're on mode selection screen, go to home page
+        fadeOverlay.classList.add('active');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 300);
+      }
+    });
+
+    // Update back button text on page load
+    updateBackButton();
 
     // Mode selection (Practice, Local, Online)
     document.querySelectorAll('.mode-card').forEach(card => {
@@ -869,12 +1309,14 @@
           document.getElementById('mode-selection').style.display = 'none';
           document.getElementById('online-lobby').style.display = 'block';
           connectToLobby();
+          updateBackButton();
         } else {
           document.getElementById('mode-selection').style.display = 'none';
           document.getElementById('typing-mode-selection').style.display = 'flex';
 
           const modeText = mode === 'practice' ? 'PRACTICE MODE' : 'LOCAL 1v1 MODE';
           document.getElementById('selected-game-mode-text').textContent = modeText;
+          updateBackButton();
         }
       });
     });
@@ -959,6 +1401,12 @@
     function connectToLobby() {
       updateConnectionStatus('connecting', 'Connecting to server...');
 
+      // Set username in input field
+      const usernameInput = document.getElementById('username-input');
+      if (usernameInput) {
+        usernameInput.value = state.username;
+      }
+
       // PATCH: Always connect to deployed server
       const serverUrl = 'https://polyracer-production.up.railway.app';
 
@@ -973,6 +1421,58 @@
         updateConnectionStatus('error', 'Failed to connect to server');
       }
     }
+
+    // Username change handler
+    document.addEventListener('DOMContentLoaded', () => {
+      const changeUsernameBtn = document.getElementById('change-username-btn');
+      const usernameInput = document.getElementById('username-input');
+
+      if (changeUsernameBtn && usernameInput) {
+        changeUsernameBtn.addEventListener('click', () => {
+          const newUsername = usernameInput.value.trim();
+
+          if (!newUsername || newUsername.length < 2) {
+            alert('Username must be at least 2 characters');
+            usernameInput.value = state.username;
+            return;
+          }
+
+          if (newUsername.length > 20) {
+            alert('Username must be 20 characters or less');
+            return;
+          }
+
+          // Update username
+          state.username = newUsername;
+          localStorage.setItem('username', newUsername);
+
+          // Update on server if connected
+          if (lobbySocket && lobbySocket.connected) {
+            lobbySocket.emit('player:update-name', { name: newUsername });
+          }
+
+          // Visual feedback
+          changeUsernameBtn.textContent = 'CHANGED!';
+          changeUsernameBtn.style.borderColor = '#00ff88';
+          changeUsernameBtn.style.color = '#00ff88';
+
+          setTimeout(() => {
+            changeUsernameBtn.textContent = 'CHANGE';
+            changeUsernameBtn.style.borderColor = 'var(--cyan)';
+            changeUsernameBtn.style.color = 'var(--cyan)';
+          }, 2000);
+
+          console.log('Username changed to:', newUsername);
+        });
+
+        // Allow Enter key to change username
+        usernameInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            changeUsernameBtn.click();
+          }
+        });
+      }
+    });
 
     function initializeSocket(serverUrl) {
       lobbySocket = io(serverUrl, {
@@ -1014,27 +1514,37 @@
         updateRoomList(data.rooms || []);
       });
 
+      // ✅ Room created handler - consolidated
       lobbySocket.on('room:created', (data) => {
         console.log('Room created:', data);
-        addChatMessage('System', `Room "${data.roomName}" created with code: ${data.roomCode}`, timestamp());
+        state.currentRoom = data.roomCode;
+
+        // Save for later
+        localStorage.setItem('roomCode', data.roomCode);
+        localStorage.setItem('playerId', state.playerId);
+        localStorage.setItem('playerName', state.username);
+
+        // Get room name from data (server sends it at top level)
+        const roomName = data.roomName || data.room?.name || state.username + "'s Room";
+
+        // Generate invite link
+        const inviteLink = `https://polyracer-production.up.railway.app/modes.html?join=${data.roomCode}`;
+
+        // Auto-share in global chat
+        lobbySocket.emit('chat:send', {
+          username: state.username,
+          message: `🎮 Room created! Code: ${data.roomCode} | Link: ${inviteLink}`
+        });
+
+        // Add system message
+        addChatMessage('System', `Room "${roomName}" created with code: ${data.roomCode}`, timestamp());
+
+        // Refresh room list
         lobbySocket.emit('rooms:get');
+
+        // Ask server for room snapshot
+        lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
       });
-
-// ✅ FIXED: Proper lobby sync and manual start logic (no auto-start redirect)
-lobbySocket.on('room:created', (data) => {
-  console.log('Room created:', data);
-  state.currentRoom = data.roomCode;
-
-  // Save for later
-  localStorage.setItem('roomCode', data.roomCode);
-  localStorage.setItem('playerId', state.playerId);
-  localStorage.setItem('playerName', state.username);
-
-  addChatMessage('System', `Room created: ${data.roomCode}`, timestamp());
-
-  // Ask server for room snapshot
-  lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
-});
 
 lobbySocket.on('room:joined', (data) => {
   console.log('Joined room:', data);
@@ -1065,8 +1575,14 @@ lobbySocket.on('room:updated', (data) => {
 
 // Game countdown phase (triggered when all ready)
 lobbySocket.on('game:countdown', (data) => {
-  console.log('Countdown started');
-  showCountdown(3, () => console.log('Countdown complete'));
+  console.log('Countdown started - all players ready!');
+  const lobbyUI = document.getElementById('room-ui');
+  if (lobbyUI) {
+    lobbyUI.style.display = 'none'; // Hide lobby UI during countdown
+  }
+  showCountdown(3, () => {
+    console.log('Countdown complete');
+  });
 });
 
 // Game officially starts
@@ -1147,27 +1663,24 @@ lobbySocket.on('reconnect_failed', () => {
     });
 
     document.getElementById('confirm-create-room').addEventListener('click', () => {
-      const roomName = document.getElementById('room-name-input').value.trim();
-      if (!roomName) {
-        alert('Please enter a room name');
-        return;
-      }
-
       if (lobbySocket && lobbySocket.connected) {
+        const roomName = `${state.username}'s Room`;
+
         lobbySocket.emit('room:create', {
           roomName: roomName,
-          maxPlayers: 4,
+          maxPlayers: 2,
           gameSettings: {
             mode: 'quick',
             typingMode: 'letters'
           }
         });
+
+        console.log('Creating room:', roomName);
       } else {
         alert('Not connected to server');
       }
 
       document.getElementById('create-room-modal').classList.remove('active');
-      document.getElementById('room-name-input').value = '';
     });
 
     document.getElementById('confirm-join-room').addEventListener('click', () => {
@@ -1312,11 +1825,30 @@ lobbySocket.on('reconnect_failed', () => {
 
       messageEl.innerHTML = `
         <span class="username">${escapeHtml(username)}:</span>
-        <span class="text">${escapeHtml(message)}</span>
+        <span class="text">${linkifyMessage(message)}</span>
         ${timeStr}
       `;
       chatMessages.appendChild(messageEl);
       chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function linkifyMessage(text) {
+      // First escape HTML for security
+      const escaped = escapeHtml(text);
+
+      // Regex to detect URLs
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+      // Replace URLs with clickable links
+      return escaped.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="
+          color: #00ffff;
+          text-decoration: underline;
+          font-weight: 600;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        " onmouseover="this.style.color='#00ff88'" onmouseout="this.style.color='#00ffff'">${url}</a>`;
+      });
     }
 
     function timestamp() {
@@ -1344,6 +1876,10 @@ lobbySocket.on('game:redirect', (data) => {
 
     function updateRoomLobbyUI(room) {
   let lobbyUI = document.getElementById('room-ui');
+
+  // Generate shareable link using production URL
+  const inviteLink = `https://polyracer-production.up.railway.app/modes.html?join=${room.code}`;
+
   if (!lobbyUI) {
     lobbyUI = document.createElement('div');
     lobbyUI.id = 'room-ui';
@@ -1351,44 +1887,166 @@ lobbySocket.on('game:redirect', (data) => {
     lobbyUI.style.top = '50%';
     lobbyUI.style.left = '50%';
     lobbyUI.style.transform = 'translate(-50%, -50%)';
-    lobbyUI.style.background = 'rgba(0,0,0,0.9)';
-    lobbyUI.style.border = '2px solid cyan';
-    lobbyUI.style.padding = '30px';
+    lobbyUI.style.background = 'rgba(0,0,0,0.95)';
+    lobbyUI.style.border = '2px solid #00ffff';
+    lobbyUI.style.padding = '40px';
     lobbyUI.style.borderRadius = '10px';
     lobbyUI.style.textAlign = 'center';
     lobbyUI.style.zIndex = '9999';
     lobbyUI.style.color = '#00ffff';
+    lobbyUI.style.minWidth = '500px';
+    lobbyUI.style.maxWidth = '90%';
+    lobbyUI.style.boxShadow = '0 0 60px rgba(0,255,255,0.4)';
     lobbyUI.innerHTML = `
-      <h2 style="letter-spacing:3px;">ROOM ${room.code}</h2>
-      <div id="room-players"></div>
+      <h2 style="letter-spacing:4px; margin-bottom:25px; font-size:2rem; text-shadow:0 0 20px #00ffff;">ROOM ${room.code}</h2>
+
+      <!-- Invite Link Section -->
+      <div style="background:rgba(0,0,0,0.6); padding:20px; border:1px solid rgba(0,255,255,0.3); border-radius:8px; margin-bottom:25px;">
+        <p style="font-size:0.75rem; letter-spacing:2px; color:rgba(255,255,255,0.6); margin-bottom:12px;">INVITE LINK</p>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="invite-link-input" readonly value="${inviteLink}" style="
+            flex:1;
+            padding:12px 15px;
+            background:rgba(0,0,0,0.8);
+            border:2px solid rgba(0,255,255,0.4);
+            color:#00ffff;
+            font-family:'Orbitron';
+            font-size:0.85rem;
+            border-radius:6px;
+            outline:none;
+          "/>
+          <button id="copy-link-btn" style="
+            padding:12px 24px;
+            background:transparent;
+            border:2px solid #00ffff;
+            color:#00ffff;
+            font-family:'Orbitron';
+            font-weight:600;
+            letter-spacing:2px;
+            cursor:pointer;
+            border-radius:6px;
+            transition:all 0.3s ease;
+            white-space:nowrap;
+          ">COPY</button>
+        </div>
+        <p style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:10px; letter-spacing:1px;">Share this link with your friend to join instantly</p>
+      </div>
+
+      <!-- Players List -->
+      <div style="margin-bottom:25px;">
+        <p style="font-size:0.75rem; letter-spacing:2px; color:rgba(255,255,255,0.6); margin-bottom:12px;">PLAYERS</p>
+        <div id="room-players"></div>
+      </div>
+
+      <!-- Ready Button -->
       <button id="ready-btn" style="
-        margin-top:20px;
-        padding:10px 20px;
-        border:2px solid #00ffff;
+        padding:14px 40px;
+        border:2px solid #00ff88;
         background:transparent;
-        color:#00ffff;
+        color:#00ff88;
         cursor:pointer;
         font-family:'Orbitron';
+        font-weight:700;
+        letter-spacing:3px;
+        font-size:0.95rem;
         text-transform:uppercase;
-      ">I'm Ready</button>
+        border-radius:6px;
+        transition:all 0.3s ease;
+        box-shadow:0 0 20px rgba(0,255,136,0.3);
+      ">I'M READY</button>
+
+      <!-- Leave Button -->
+      <button id="leave-room-btn" style="
+        margin-top:15px;
+        padding:10px 24px;
+        border:2px solid rgba(255,255,255,0.3);
+        background:transparent;
+        color:rgba(255,255,255,0.6);
+        cursor:pointer;
+        font-family:'Orbitron';
+        font-weight:600;
+        letter-spacing:2px;
+        font-size:0.8rem;
+        text-transform:uppercase;
+        border-radius:6px;
+        transition:all 0.3s ease;
+      ">LEAVE ROOM</button>
     `;
     document.body.appendChild(lobbyUI);
+
+    // Copy button functionality
+    document.getElementById('copy-link-btn').addEventListener('click', () => {
+      const linkInput = document.getElementById('invite-link-input');
+      linkInput.select();
+      linkInput.setSelectionRange(0, 99999); // For mobile
+
+      navigator.clipboard.writeText(inviteLink).then(() => {
+        const copyBtn = document.getElementById('copy-link-btn');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        copyBtn.style.borderColor = '#00ff88';
+        copyBtn.style.color = '#00ff88';
+
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.style.borderColor = '#00ffff';
+          copyBtn.style.color = '#00ffff';
+        }, 2000);
+      }).catch(err => {
+        alert('Failed to copy link. Please copy manually.');
+      });
+    });
+
+    // Leave room functionality
+    document.getElementById('leave-room-btn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to leave this room?')) {
+        if (lobbySocket && lobbySocket.connected) {
+          lobbySocket.emit('room:leave');
+        }
+        document.body.removeChild(lobbyUI);
+        state.currentRoom = null;
+      }
+    });
   }
 
-  // update player list
+  // Update player list
   const playerContainer = document.getElementById('room-players');
   playerContainer.innerHTML = room.players.map(p => `
-    <div style="margin:8px 0; font-size:1rem; ${p.ready ? 'color:#00ff88' : 'color:#ff00ff'};">
-      ${p.name} ${p.ready ? '✓ Ready' : '...Waiting'}
+    <div style="
+      margin:10px 0;
+      padding:12px 20px;
+      font-size:1rem;
+      background:rgba(${p.ready ? '0,255,136' : '255,0,255'},0.1);
+      border:1px solid rgba(${p.ready ? '0,255,136' : '255,0,255'},0.3);
+      border-radius:6px;
+      color:${p.ready ? '#00ff88' : '#ff00ff'};
+      font-weight:600;
+      letter-spacing:2px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    ">
+      <span>${escapeHtml(p.name)}</span>
+      <span>${p.ready ? '✓ READY' : 'WAITING...'}</span>
     </div>
   `).join('');
 
-  // ready button
+  // Ready button
   const readyBtn = document.getElementById('ready-btn');
+  readyBtn.onmouseenter = () => {
+    readyBtn.style.background = 'rgba(0,255,136,0.1)';
+    readyBtn.style.boxShadow = '0 0 30px rgba(0,255,136,0.5)';
+  };
+  readyBtn.onmouseleave = () => {
+    readyBtn.style.background = 'transparent';
+    readyBtn.style.boxShadow = '0 0 20px rgba(0,255,136,0.3)';
+  };
   readyBtn.onclick = () => {
     lobbySocket.emit('player:ready');
     readyBtn.disabled = true;
     readyBtn.textContent = 'READY ✓';
+    readyBtn.style.opacity = '0.5';
+    readyBtn.style.cursor = 'not-allowed';
   };
 }
 
@@ -1422,6 +2080,52 @@ function showCountdown(seconds, callback) {
   }, 1000);
 }
 
+  </script>
+
+  <!-- Global online tracking (for all modes) -->
+  <script>
+    // Always track users as online on modes page
+    (function() {
+      const serverUrl = 'https://polyracer-production.up.railway.app';
+
+      // Generate or get stored anonymous ID
+      let anonymousId = localStorage.getItem('anonymousId');
+      if (!anonymousId) {
+        anonymousId = 'Guest_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('anonymousId', anonymousId);
+      }
+
+      try {
+        const backgroundSocket = io(serverUrl, {
+          transports: ['websocket', 'polling'],
+          reconnection: true
+        });
+
+        backgroundSocket.on('connect', () => {
+          console.log('[MODES] Background connection established:', backgroundSocket.id);
+
+          // Register as a visitor
+          backgroundSocket.emit('player:register', {
+            name: anonymousId,
+            isVisitor: true
+          });
+        });
+
+        backgroundSocket.on('disconnect', () => {
+          console.log('[MODES] Background disconnected');
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+          if (backgroundSocket && backgroundSocket.connected) {
+            backgroundSocket.disconnect();
+          }
+        });
+
+      } catch (error) {
+        console.error('[MODES] Background connection failed:', error);
+      }
+    })();
   </script>
 </body>
 </html>
