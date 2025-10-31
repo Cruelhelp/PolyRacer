@@ -444,51 +444,147 @@
       pointer-events: all;
     }
 
-    /* Responsive */
+    /* Responsive - Mobile First */
     @media (max-width: 768px) {
+      html, body {
+        overflow-x: hidden;
+      }
+
+      .hero {
+        min-height: 100vh;
+        padding: 20px 0;
+      }
+
       .hero-content {
-        padding: 0 1.5rem;
+        padding: 0 1rem;
       }
 
       .title-line {
-        font-size: 4rem;
-        letter-spacing: 8px;
+        font-size: 3rem;
+        letter-spacing: 6px;
       }
 
       .hero-subtitle {
-        font-size: 0.9rem;
-        letter-spacing: 4px;
+        font-size: 0.8rem;
+        letter-spacing: 3px;
+        margin-bottom: 2rem;
       }
 
       .btn-primary {
-        padding: 0.9rem 2.5rem;
+        padding: 1rem 2rem;
         font-size: 0.85rem;
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .player-count {
+        font-size: 0.75rem;
+      }
+
+      .info-section {
+        padding: 40px 15px;
       }
 
       .how-to-play-grid {
         grid-template-columns: 1fr;
-        gap: 30px;
+        gap: 25px;
+      }
+
+      .play-step {
+        padding: 0 10px;
+      }
+
+      .step-icon svg {
+        width: 40px;
+        height: 40px;
+      }
+
+      .step-title {
+        font-size: 1rem;
+        letter-spacing: 3px;
+      }
+
+      .step-text {
+        font-size: 0.8rem;
+      }
+
+      .leaderboard-container {
+        padding: 0 10px;
       }
 
       .leaderboard-header,
       .leaderboard-entry {
-        grid-template-columns: 60px 1fr 70px 70px;
-        gap: 10px;
-        padding: 15px 15px;
+        grid-template-columns: 50px 1fr 60px 60px;
+        gap: 8px;
+        padding: 12px 10px;
       }
 
       .lb-col {
-        font-size: 0.65rem;
-        letter-spacing: 2px;
+        font-size: 0.6rem;
+        letter-spacing: 1px;
       }
 
       .leaderboard-entry .lb-col {
+        font-size: 0.75rem;
+      }
+
+      .rank-icon {
+        width: 18px !important;
+        height: 18px !important;
+      }
+
+      .info-title {
+        font-size: 1.3rem;
+        letter-spacing: 4px;
+      }
+
+      .info-subtitle {
+        font-size: 0.75rem;
+      }
+
+      .footer {
+        padding: 30px 15px;
+      }
+
+      .footer-text p {
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .title-line {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+      }
+
+      .hero-subtitle {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+      }
+
+      .btn-primary {
+        padding: 0.9rem 1.5rem;
         font-size: 0.8rem;
       }
 
       .info-title {
-        font-size: 1.5rem;
-        letter-spacing: 6px;
+        font-size: 1.1rem;
+        letter-spacing: 3px;
+      }
+
+      .leaderboard-header,
+      .leaderboard-entry {
+        grid-template-columns: 40px 1fr 50px 50px;
+        gap: 6px;
+        padding: 10px 8px;
+      }
+
+      .lb-col {
+        font-size: 0.55rem;
+      }
+
+      .leaderboard-entry .lb-col {
+        font-size: 0.7rem;
       }
     }
   </style>
@@ -1165,6 +1261,74 @@
       div.textContent = text;
       return div.innerHTML;
     }
+  </script>
+
+  <!-- Socket.IO for online player count -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+  <script>
+    // Connect to server to track online players
+    (function() {
+      const serverUrl = 'https://polyracer-production.up.railway.app';
+      const playersOnlineEl = document.getElementById('players-online');
+
+      // Generate or get stored anonymous ID
+      let anonymousId = localStorage.getItem('anonymousId');
+      if (!anonymousId) {
+        anonymousId = 'Guest_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('anonymousId', anonymousId);
+      }
+
+      try {
+        const socket = io(serverUrl, {
+          transports: ['websocket', 'polling'],
+          reconnection: true,
+          reconnectionAttempts: 3
+        });
+
+        socket.on('connect', () => {
+          console.log('[HOME] Connected to server:', socket.id);
+
+          // Register as a visitor
+          socket.emit('player:register', {
+            name: anonymousId,
+            isVisitor: true
+          });
+        });
+
+        // Update online count
+        socket.on('players:online', (data) => {
+          if (playersOnlineEl && data.count !== undefined) {
+            playersOnlineEl.textContent = data.count;
+            console.log('[HOME] Players online:', data.count);
+          }
+        });
+
+        socket.on('connect_error', (error) => {
+          console.log('[HOME] Connection error, showing offline');
+          if (playersOnlineEl) {
+            playersOnlineEl.textContent = '---';
+          }
+        });
+
+        socket.on('disconnect', () => {
+          console.log('[HOME] Disconnected from server');
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+          if (socket && socket.connected) {
+            socket.disconnect();
+          }
+        });
+
+      } catch (error) {
+        console.error('[HOME] Failed to connect:', error);
+        if (playersOnlineEl) {
+          playersOnlineEl.textContent = '---';
+        }
+      }
+    })();
   </script>
 </body>
 </html>
