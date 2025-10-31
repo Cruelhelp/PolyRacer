@@ -79,8 +79,37 @@ io.on('connection', (socket) => {
     console.log(`Player registered: ${playerData.name} (${socket.id})`);
   });
 
+  // Update player name
+  socket.on('player:update-name', (data) => {
+    const player = players.get(socket.id);
+    if (!player) return;
+
+    const oldName = player.name;
+    player.name = data.name;
+
+    console.log(`Player ${oldName} changed name to ${data.name}`);
+
+    // Update name in any room they're in
+    if (player.roomCode) {
+      const room = rooms.get(player.roomCode);
+      if (room) {
+        const rp = room.players.find(p => p.socketId === socket.id);
+        if (rp) {
+          rp.name = data.name;
+          io.to(player.roomCode).emit('room:updated', { room, playerCount: room.players.length });
+        }
+      }
+    }
+
+    // Broadcast updated player list
+    io.emit('players:online', {
+      count: players.size,
+      players: getOnlinePlayers()
+    });
+  });
+
   // Create a new room
-  socket.on('room:create', () => {
+  socket.on('room:create', (data) => {
     const player = players.get(socket.id);
     if (!player) {
       socket.emit('room:error', { message: 'Player not registered' });
@@ -88,8 +117,11 @@ io.on('connection', (socket) => {
     }
 
     const roomCode = generateRoomCode();
+    const roomName = data?.roomName || `${player.name}'s Room`;
+
     const room = {
       code: roomCode,
+      name: roomName,
       host: socket.id,
       players: [{
         socketId: socket.id,
@@ -102,7 +134,9 @@ io.on('connection', (socket) => {
       }],
       gameState: 'waiting',
       winner: null,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      maxPlayers: data?.maxPlayers || 2,
+      gameSettings: data?.gameSettings || {}
     };
 
     rooms.set(roomCode, room);
@@ -110,8 +144,8 @@ io.on('connection', (socket) => {
     player.roomCode = roomCode;
     player.inGame = true;
 
-    socket.emit('room:created', { roomCode, room });
-    console.log(`Room ${roomCode} created by ${player.name}`);
+    socket.emit('room:created', { roomCode, roomName, room });
+    console.log(`Room "${roomName}" (${roomCode}) created by ${player.name}`);
   });
 
   // Join room
@@ -195,39 +229,46 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player ready
+  // Player ready (FIXED)
   socket.on('player:ready', () => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
     const room = rooms.get(player.roomCode);
     if (!room) return;
 
+    // Mark player as ready
     const rp = room.players.find(p => p.socketId === socket.id);
     if (rp) rp.ready = true;
 
-    io.to(player.roomCode).emit('game:start', { room });
+    console.log(`[READY] ${player.name} is ready in room ${room.code}`);
 
-    // Notify all players to redirect
-    room.players.forEach(p => {
-      const playerSocket = io.sockets.sockets.get(p.socketId);
-      if (playerSocket) {
-        playerSocket.emit('game:redirect', { roomCode: room.code });
-      }
-    });
+    // Broadcast updated room state to all players
+    io.to(player.roomCode).emit('room:updated', { room, playerCount: room.players.length });
 
-    if (room.gameState === 'waiting' && room.players.length >= 2 && room.players.every(p => p.ready)) {
+    // Check if ALL players are ready
+    const allReady = room.players.length >= 2 && room.players.every(p => p.ready);
+
+    if (allReady && room.gameState === 'waiting') {
+      console.log(`[GAME] All players ready in room ${room.code}. Starting countdown...`);
+
       room.gameState = 'countdown';
+
+      // Emit countdown event
       io.to(player.roomCode).emit('game:countdown', { room });
 
+      // Wait 4 seconds (3-2-1-GO), then start game
       setTimeout(() => {
         room.gameState = 'playing';
         room.startTime = Date.now();
         io.to(player.roomCode).emit('game:start', { room });
-      }, 3000);
+        console.log(`[GAME] Game started in room ${room.code}`);
+      }, 4000);
+    } else {
+      console.log(`[WAITING] Room ${room.code}: ${room.players.filter(p => p.ready).length}/${room.players.length} players ready`);
     }
   });
 
-  // Multiplayer sync — live movement updates
+  // Multiplayer sync — live movement updates (IMPROVED)
   socket.on('player:update', (data) => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
@@ -240,18 +281,11 @@ io.on('connection', (socket) => {
       rp.progress = data.progress ?? 0;
       rp.score = data.score ?? 0;
       rp.combo = data.combo ?? 0;
+      rp.animTime = data.animTime ?? 0;
+      rp.velocity = data.velocity ?? 0;
     }
 
-    // Send this player's new state to everyone else
-    socket.to(player.roomCode).emit('player:update', {
-      socketId: socket.id,
-      positionX: rp.position,
-      score: rp.score,
-      combo: rp.combo,
-      progress: rp.progress,
-    });
-
-    // Broadcast full room sync
+    // Send updated state to ALL players in room (including sender for echo confirmation)
     io.to(player.roomCode).emit('game:update', {
       players: room.players.map(p => ({
         socketId: p.socketId,
@@ -259,7 +293,9 @@ io.on('connection', (socket) => {
         position: p.position,
         progress: p.progress,
         score: p.score,
-        combo: p.combo
+        combo: p.combo,
+        animTime: p.animTime,
+        velocity: p.velocity
       })),
       gameState: room.gameState
     });
@@ -350,6 +386,24 @@ app.get('/api/players', (req, res) => {
 
 app.get('/api/rooms', (req, res) => {
   res.json({ rooms: Array.from(rooms.values()) });
+});
+
+app.get('/api/room/:code', (req, res) => {
+  const room = rooms.get(req.params.code);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+  res.json({ room });
+});
+
+app.get('/api/server-info', (req, res) => {
+  const baseUrl = req.get('host');
+  const protocol = req.protocol;
+  res.json({
+    baseUrl: `${protocol}://${baseUrl}`,
+    playersOnline: players.size,
+    activeRooms: rooms.size
+  });
 });
 
 app.get('/health', (req, res) => {
