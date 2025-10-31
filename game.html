@@ -2533,16 +2533,28 @@ class GameWorld {
       if (!scene || scene.STATE !== "running") return;
 
       const me = scene.players[0]; // Local player is always index 0
-      if (!me) return;
+      if (!me) {
+        console.warn("[SYNC] Local player not found at index 0");
+        return;
+      }
 
-      socket.emit("player:update", {
+      const updateData = {
         position: me.body.position.x,
         progress: me.progressPercent,
         score: me.score,
         combo: me.combo,
         animTime: me.animTime,
         velocity: me.body.velocity.x
-      });
+      };
+
+      socket.emit("player:update", updateData);
+
+      // Log send details every 60 frames (~1 second)
+      if (!window.sendLogCount) window.sendLogCount = 0;
+      window.sendLogCount++;
+      if (window.sendLogCount % 60 === 0) {
+        console.log("[SYNC] Sending update - Progress:", me.progressPercent.toFixed(1) + "%", "Position:", me.body.position.x.toFixed(0), "Score:", me.score);
+      }
     }
 
     // Send updates on requestAnimationFrame for smooth sync
@@ -2555,18 +2567,30 @@ class GameWorld {
     // --- Receive server updates ---
     socket.on("game:update", (data) => {
       const scene = game.current_scene;
-      if (!scene || !data.players || !mySocketId) return;
+      if (!scene || !data.players || !mySocketId) {
+        if (!scene) console.warn("[SYNC] No scene available");
+        if (!data.players) console.warn("[SYNC] No player data received");
+        if (!mySocketId) console.warn("[SYNC] No socketId set yet");
+        return;
+      }
 
       // Find opponent data (player that is NOT me)
       const opponentData = data.players.find(p => p.socketId !== mySocketId);
-      if (!opponentData) return;
+      if (!opponentData) {
+        console.warn("[SYNC] No opponent data found. My ID:", mySocketId, "Players:", data.players.map(p => p.socketId));
+        return;
+      }
 
       // Update opponent (player index 1)
       const opponent = scene.players[1];
-      if (!opponent) return;
+      if (!opponent) {
+        console.warn("[SYNC] No opponent player object at index 1");
+        return;
+      }
 
       // Smooth interpolation for position
       const targetX = opponentData.position ?? opponent.body.position.x;
+      const oldX = opponent.body.position.x;
       opponent.body.position.x += (targetX - opponent.body.position.x) * 0.3;
 
       // Direct update for other properties
@@ -2580,6 +2604,13 @@ class GameWorld {
       }
       if (opponentData.velocity !== undefined) {
         opponent.body.velocity.x = opponentData.velocity;
+      }
+
+      // Log sync details every 60 frames (~1 second)
+      if (!window.syncLogCount) window.syncLogCount = 0;
+      window.syncLogCount++;
+      if (window.syncLogCount % 60 === 0) {
+        console.log("[SYNC] Opponent update - Progress:", opponent.progressPercent.toFixed(1) + "%", "Position:", opponent.body.position.x.toFixed(0), "Score:", opponent.score);
       }
     });
 
@@ -2610,7 +2641,12 @@ class GameWorld {
         scene.raceStartTime = Date.now();
         scene.updateUIState();
 
-        console.log("[MULTIPLAYER] Race started!");
+        console.log("[MULTIPLAYER] Race started! Scene STATE:", scene.STATE);
+        console.log("[MULTIPLAYER] Players in scene:", scene.players.length);
+        console.log("[MULTIPLAYER] Player 0 (local):", scene.players[0] ? "Ready" : "Missing");
+        console.log("[MULTIPLAYER] Player 1 (opponent):", scene.players[1] ? "Ready" : "Missing");
+      } else {
+        console.error("[MULTIPLAYER] No scene available when game:start received!");
       }
     });
 
