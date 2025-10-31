@@ -1624,6 +1624,16 @@ lobbySocket.on('reconnect_failed', () => {
   updateConnectionStatus('error', 'Failed to reconnect. Please refresh the page.');
 });
 
+// Game redirect handler (for future use if needed)
+lobbySocket.on('game:redirect', (data) => {
+  console.log('Redirecting to game for room:', data.roomCode);
+  const fadeOverlay = document.getElementById('fade-overlay');
+  fadeOverlay.classList.add('active');
+  setTimeout(() => {
+    window.location.href = `game.html?mode=online&room=${data.roomCode}`;
+  }, 800);
+});
+
     }
 
     function updateRoomList(rooms) {
@@ -1863,16 +1873,6 @@ lobbySocket.on('reconnect_failed', () => {
       div.textContent = text;
       return div.innerHTML;
     }
-
-    // When the game is ready to start, redirect both players
-lobbySocket.on('game:redirect', (data) => {
-  console.log('Redirecting to game for room:', data.roomCode);
-  const fadeOverlay = document.getElementById('fade-overlay');
-  fadeOverlay.classList.add('active');
-  setTimeout(() => {
-    window.location.href = `game.html?mode=online&room=${data.roomCode}`;
-  }, 800);
-});
 
     function updateRoomLobbyUI(room) {
   let lobbyUI = document.getElementById('room-ui');
