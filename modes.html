@@ -1527,86 +1527,52 @@
         updateRoomList(data.rooms || []);
       });
 
-      // ✅ Room created handler - consolidated
+      // ✅ Room created handler - REDIRECT TO GAME IMMEDIATELY
       lobbySocket.on('room:created', (data) => {
-        console.log('Room created:', data);
+        console.log('[LOBBY] Room created:', data);
         state.currentRoom = data.roomCode;
 
-        // Save for later
+        // Save for game
         localStorage.setItem('roomCode', data.roomCode);
         localStorage.setItem('playerId', state.playerId);
-        localStorage.setItem('playerName', state.username);
-
-        // Get room name from data (server sends it at top level)
-        const roomName = data.roomName || data.room?.name || state.username + "'s Room";
-
-        // Generate invite link
-        const inviteLink = `https://polyracer-production.up.railway.app/modes.html?join=${data.roomCode}`;
+        localStorage.setItem('username', state.username);
 
         // Auto-share in global chat
+        const inviteLink = `https://polyracer-production.up.railway.app/game.html?mode=online&room=${data.roomCode}`;
         lobbySocket.emit('chat:send', {
           username: state.username,
-          message: `🎮 Room created! Code: ${data.roomCode} | Link: ${inviteLink}`
+          message: `🎮 Room created! Join here: ${inviteLink}`
         });
 
-        // Add system message
-        addChatMessage('System', `Room "${roomName}" created with code: ${data.roomCode}`, timestamp());
-
-        // Refresh room list
-        lobbySocket.emit('rooms:get');
-
-        // Ask server for room snapshot
-        lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
+        // Redirect to game immediately
+        console.log('[LOBBY] Redirecting to game...');
+        const fadeOverlay = document.getElementById('fade-overlay');
+        fadeOverlay.classList.add('active');
+        setTimeout(() => {
+          window.location.href = `game.html?mode=online&room=${data.roomCode}`;
+        }, 500);
       });
 
 lobbySocket.on('room:joined', (data) => {
-  console.log('Joined room:', data);
+  console.log('[LOBBY] Joined room:', data);
   state.currentRoom = data.roomCode;
 
   // Save info for game session
   localStorage.setItem('roomCode', data.roomCode);
   localStorage.setItem('playerId', state.playerId);
-  localStorage.setItem('playerName', state.username);
+  localStorage.setItem('username', state.username);
 
-  addChatMessage('System', `Joined room: ${data.roomCode}`, timestamp());
-
-  // Ask server for latest full state
-  lobbySocket.emit('room:sync:request', { roomCode: data.roomCode });
-});
-
-// When we receive authoritative room snapshot
-lobbySocket.on('room:sync', (data) => {
-  console.log('Room sync received:', data.room);
-  updateRoomLobbyUI(data.room);
-});
-
-// When players toggle ready / leave / join
-lobbySocket.on('room:updated', (data) => {
-  console.log('Room updated:', data.room);
-  updateRoomLobbyUI(data.room);
-});
-
-// Game countdown phase (triggered when all ready)
-lobbySocket.on('game:countdown', (data) => {
-  console.log('Countdown started - all players ready!');
-  const lobbyUI = document.getElementById('room-ui');
-  if (lobbyUI) {
-    lobbyUI.style.display = 'none'; // Hide lobby UI during countdown
-  }
-  showCountdown(3, () => {
-    console.log('Countdown complete');
-  });
-});
-
-// Game officially starts
-lobbySocket.on('game:start', (data) => {
-  console.log('Game started for room', data.room.code);
+  // Redirect to game immediately
+  console.log('[LOBBY] Redirecting to game...');
   const fadeOverlay = document.getElementById('fade-overlay');
   fadeOverlay.classList.add('active');
   setTimeout(() => {
-    window.location.href = `game.html?mode=online&room=${data.room.code}`;
-  }, 800);
+    window.location.href = `game.html?mode=online&room=${data.roomCode}`;
+  }, 500);
 });
+
+// Legacy handlers removed - all game logic now in game.html
+// Lobby is just for creating/joining rooms
 
 // --- Error & connection events (unchanged but cleaned) ---
 lobbySocket.on('room:error', (data) => {
@@ -1657,14 +1623,7 @@ lobbySocket.on('game:redirect', (data) => {
   }, 800);
 });
 
-// Room reset handler for rematch
-lobbySocket.on('room:reset', (data) => {
-  console.log('[REMATCH] Room reset for rematch:', data.room);
-  addChatMessage('System', `Room ${data.room.code} is ready for a rematch! Click READY when you're prepared.`, timestamp());
-
-  // Update the room UI to show reset state
-  updateRoomLobbyUI(data.room);
-});
+// Rematch happens in game - no lobby handling needed
 
     }
 
