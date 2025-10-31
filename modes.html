@@ -1617,6 +1617,8 @@ lobbySocket.on('room:error', (data) => {
   // Add helpful context for common errors
   if (errorMsg === 'Room not found') {
     errorMsg += '\n\nThe room may have:\n• Expired due to inactivity\n• Been created on a different server\n• Already been deleted\n\nTry creating a new room instead.';
+  } else if (errorMsg === 'Game already started') {
+    errorMsg += '\n\nThis game is currently in progress.\n\nThe room will be available again in a few seconds after the current race finishes.';
   }
 
   alert(errorMsg);
@@ -1653,6 +1655,15 @@ lobbySocket.on('game:redirect', (data) => {
   setTimeout(() => {
     window.location.href = `game.html?mode=online&room=${data.roomCode}`;
   }, 800);
+});
+
+// Room reset handler for rematch
+lobbySocket.on('room:reset', (data) => {
+  console.log('[REMATCH] Room reset for rematch:', data.room);
+  addChatMessage('System', `Room ${data.room.code} is ready for a rematch! Click READY when you're prepared.`, timestamp());
+
+  // Update the room UI to show reset state
+  updateRoomLobbyUI(data.room);
 });
 
     }
