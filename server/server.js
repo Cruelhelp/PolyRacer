@@ -46,10 +46,13 @@ io.on('connection', (socket) => {
 
   // --- SYNC PATCH ---
   socket.on('room:sync:request', ({ roomCode }) => {
+    console.log(`[SYNC] Player ${socket.id} requesting sync for room ${roomCode}`);
     const room = rooms.get(roomCode);
     if (room) {
+      console.log(`[SYNC] Room ${roomCode} found. Players: ${room.players.length}, State: ${room.gameState}`);
       socket.emit('room:sync', { room });
     } else {
+      console.error(`[SYNC] Room ${roomCode} NOT FOUND. Active rooms:`, Array.from(rooms.keys()).join(', ') || 'None');
       socket.emit('room:error', { message: 'Room not found' });
     }
   });
@@ -151,13 +154,26 @@ io.on('connection', (socket) => {
   // Join room
   socket.on('room:join', (data) => {
     const { roomCode } = data;
+    console.log(`[JOIN] Player ${socket.id} attempting to join room ${roomCode}`);
     const room = rooms.get(roomCode);
     const player = players.get(socket.id);
 
-    if (!player) return socket.emit('room:error', { message: 'Player not registered' });
-    if (!room) return socket.emit('room:error', { message: 'Room not found' });
-    if (room.players.length >= 2) return socket.emit('room:error', { message: 'Room is full' });
-    if (room.gameState !== 'waiting') return socket.emit('room:error', { message: 'Game already started' });
+    if (!player) {
+      console.error(`[JOIN] Player ${socket.id} not registered`);
+      return socket.emit('room:error', { message: 'Player not registered' });
+    }
+    if (!room) {
+      console.error(`[JOIN] Room ${roomCode} not found. Active rooms:`, Array.from(rooms.keys()).join(', ') || 'None');
+      return socket.emit('room:error', { message: 'Room not found' });
+    }
+    if (room.players.length >= 2) {
+      console.error(`[JOIN] Room ${roomCode} is full`);
+      return socket.emit('room:error', { message: 'Room is full' });
+    }
+    if (room.gameState !== 'waiting') {
+      console.error(`[JOIN] Room ${roomCode} game already started`);
+      return socket.emit('room:error', { message: 'Game already started' });
+    }
 
     room.players.push({
       socketId: socket.id,
@@ -366,8 +382,16 @@ io.on('connection', (socket) => {
           room
         });
         if (room.players.length === 0) {
-          rooms.delete(player.roomCode);
-          console.log(`Room ${player.roomCode} deleted`);
+          // Keep room alive for 30 seconds to allow host to reconnect
+          console.log(`Room ${player.roomCode} is now empty. Will delete in 30 seconds if no one rejoins...`);
+          room.emptyAt = Date.now();
+          setTimeout(() => {
+            const stillEmpty = room.players.length === 0;
+            if (stillEmpty && rooms.has(player.roomCode)) {
+              rooms.delete(player.roomCode);
+              console.log(`Room ${player.roomCode} deleted (empty timeout)`);
+            }
+          }, 30000);
         }
       }
     }
