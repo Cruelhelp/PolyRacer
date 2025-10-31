@@ -170,10 +170,16 @@ io.on('connection', (socket) => {
       console.error(`[JOIN] Room ${roomCode} is full`);
       return socket.emit('room:error', { message: 'Room is full' });
     }
-    if (room.gameState !== 'waiting') {
-      console.error(`[JOIN] Room ${roomCode} game already started`);
-      return socket.emit('room:error', { message: 'Game already started' });
+
+    // Allow joining in waiting, in-game-lobby, or finished states
+    const joinableStates = ['waiting', 'in-game-lobby', 'finished'];
+    if (!joinableStates.includes(room.gameState)) {
+      console.error(`[JOIN] Room ${roomCode} game already started. Current state: ${room.gameState}`);
+      return socket.emit('room:error', { message: 'Game in progress. Please wait for the race to finish.' });
     }
+
+    console.log(`[JOIN] Player ${player.name} successfully joining room ${roomCode}`);
+
 
     room.players.push({
       socketId: socket.id,
@@ -245,7 +251,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player ready (FIXED)
+  // Player ready in lobby (for modes.html)
   socket.on('player:ready', () => {
     const player = players.get(socket.id);
     if (!player || !player.roomCode) return;
@@ -265,22 +271,85 @@ io.on('connection', (socket) => {
     const allReady = room.players.length >= 2 && room.players.every(p => p.ready);
 
     if (allReady && room.gameState === 'waiting') {
-      console.log(`[GAME] All players ready in room ${room.code}. Starting countdown...`);
+      console.log(`[LOBBY] All players ready in room ${room.code}. Transitioning to in-game-lobby...`);
 
-      room.gameState = 'countdown';
+      // Change state to in-game-lobby (players will redirect to game.html)
+      room.gameState = 'in-game-lobby';
 
-      // Emit countdown event
+      // Reset ready flags for in-game ready check
+      room.players.forEach(p => p.gameReady = false);
+
+      // Emit countdown event (will redirect to game)
       io.to(player.roomCode).emit('game:countdown', { room });
 
-      // Wait 4 seconds (3-2-1-GO), then start game
+      // Wait 4 seconds (3-2-1-GO), then transition to game
       setTimeout(() => {
-        room.gameState = 'playing';
-        room.startTime = Date.now();
         io.to(player.roomCode).emit('game:start', { room });
-        console.log(`[GAME] Game started in room ${room.code}`);
+        console.log(`[LOBBY] Players redirected to game in room ${room.code}`);
       }, 4000);
     } else {
       console.log(`[WAITING] Room ${room.code}: ${room.players.filter(p => p.ready).length}/${room.players.length} players ready`);
+    }
+  });
+
+  // Player ready in game (for game.html)
+  socket.on('player:game-ready', () => {
+    const player = players.get(socket.id);
+    if (!player || !player.roomCode) return;
+    const room = rooms.get(player.roomCode);
+    if (!room || room.gameState !== 'in-game-lobby') return;
+
+    // Mark player as game-ready
+    const rp = room.players.find(p => p.socketId === socket.id);
+    if (rp) rp.gameReady = true;
+
+    console.log(`[GAME-READY] ${player.name} is ready in game for room ${room.code}`);
+
+    // Broadcast updated room state to all players in game
+    io.to(player.roomCode).emit('game:players-update', {
+      players: room.players.map(p => ({
+        socketId: p.socketId,
+        name: p.name,
+        gameReady: p.gameReady || false
+      }))
+    });
+
+    // Check if ALL players are game-ready
+    const allGameReady = room.players.length >= 2 && room.players.every(p => p.gameReady);
+
+    if (allGameReady) {
+      console.log(`[GAME-READY] All players ready in game for room ${room.code}. Starting sync verification...`);
+
+      // Verify all players are connected
+      const connectedPlayers = room.players.filter(p => {
+        const socket = io.sockets.sockets.get(p.socketId);
+        return socket && socket.connected;
+      });
+
+      if (connectedPlayers.length === room.players.length) {
+        console.log(`[SYNC-CHECK] All ${room.players.length} players connected and synced. Starting countdown...`);
+
+        room.gameState = 'countdown';
+
+        // Emit verified countdown event
+        io.to(player.roomCode).emit('game:verified-countdown', { room });
+
+        // Wait 4 seconds (3-2-1-GO), then start race
+        setTimeout(() => {
+          room.gameState = 'playing';
+          room.startTime = Date.now();
+          io.to(player.roomCode).emit('game:race-start', { room });
+          console.log(`[RACE] Race started in room ${room.code}`);
+        }, 4000);
+      } else {
+        console.error(`[SYNC-CHECK] Player sync failed. ${connectedPlayers.length}/${room.players.length} connected`);
+        io.to(player.roomCode).emit('game:sync-failed', {
+          message: 'Player sync failed. Please ensure both players are connected.'
+        });
+      }
+    } else {
+      const readyCount = room.players.filter(p => p.gameReady).length;
+      console.log(`[GAME-WAITING] Room ${room.code}: ${readyCount}/${room.players.length} players game-ready`);
     }
   });
 
@@ -335,6 +404,32 @@ io.on('connection', (socket) => {
         room
       });
       console.log(`${player.name} won in room ${player.roomCode}`);
+
+      // Reset room to in-game-lobby state after 10 seconds for rematch
+      setTimeout(() => {
+        if (room && rooms.has(player.roomCode)) {
+          console.log(`[REMATCH] Resetting room ${player.roomCode} for rematch...`);
+          room.gameState = 'in-game-lobby'; // Go to in-game-lobby for seamless rematch
+          room.winner = null;
+          room.startTime = null;
+          room.endTime = null;
+          room.raceTime = null;
+
+          // Reset all player stats
+          room.players.forEach(p => {
+            p.position = 0;
+            p.progress = 0;
+            p.score = 0;
+            p.combo = 0;
+            p.ready = false;
+            p.gameReady = false; // Reset game-ready status
+          });
+
+          // Notify all players room is ready for rematch
+          io.to(player.roomCode).emit('room:reset', { room });
+          console.log(`[REMATCH] Room ${player.roomCode} reset to in-game-lobby state`);
+        }
+      }, 10000);
     }
   });
 
