@@ -671,6 +671,308 @@
         font-size: 1.3rem;
       }
     }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--cyan), var(--magenta));
+      border-radius: 5px;
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--cyan);
+      box-shadow: 0 0 20px var(--cyan);
+    }
+
+    /* Firefox scrollbar */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--cyan) rgba(0, 0, 0, 0.3);
+    }
+
+    /* Online Waiting Room */
+    #online-waiting-room {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    #online-waiting-room.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .waiting-room-content {
+      background: rgba(0, 0, 0, 0.85);
+      border: 2px solid var(--cyan);
+      border-radius: 15px;
+      padding: 40px 30px;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.05);
+    }
+
+    .waiting-title {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: 5px;
+      margin: 0 0 30px 0;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 0 20px var(--cyan);
+    }
+
+    .invite-section {
+      margin: 30px 0;
+    }
+
+    .invite-label {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .invite-link-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .invite-link-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 12px 15px;
+      color: var(--cyan);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .invite-link-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    }
+
+    .copy-link-btn {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+      border: 2px solid var(--cyan);
+      border-radius: 8px;
+      padding: 12px 20px;
+      color: var(--cyan);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .copy-link-btn:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 20px var(--cyan);
+      transform: translateY(-2px);
+    }
+
+    .copy-link-btn:active {
+      transform: translateY(0);
+    }
+
+    .players-ready-status {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 40px 0;
+      gap: 20px;
+    }
+
+    .player-status {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(0, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .player-status.ready {
+      border-color: #00ff88;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+    }
+
+    .player-status-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      filter: grayscale(1);
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+
+    .player-status.ready .player-status-icon {
+      filter: grayscale(0);
+      opacity: 1;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .player-status-name {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .player-status-badge {
+      display: inline-block;
+      padding: 6px 15px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .player-status-badge.empty {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .player-status-badge.waiting {
+      background: rgba(255, 165, 0, 0.2);
+      color: #ffaa00;
+      border: 1px solid #ffaa00;
+      animation: pulse-badge 1.5s ease-in-out infinite;
+    }
+
+    .player-status-badge.ready {
+      background: rgba(0, 255, 136, 0.2);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .vs-divider {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--magenta);
+      text-shadow: 0 0 15px var(--magenta);
+      letter-spacing: 3px;
+    }
+
+    .im-ready-btn {
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 255, 0.3));
+      border: 3px solid var(--cyan);
+      border-radius: 12px;
+      padding: 18px 60px;
+      color: var(--cyan);
+      font-family: 'Orbitron', monospace;
+      font-size: 1.3rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    }
+
+    .im-ready-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: var(--cyan);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s ease, height 0.5s ease;
+      z-index: 0;
+    }
+
+    .im-ready-btn:hover:not(:disabled)::before {
+      width: 300%;
+      height: 300%;
+    }
+
+    .im-ready-btn:hover:not(:disabled) {
+      color: #000;
+      box-shadow: 0 0 50px var(--cyan);
+      transform: translateY(-3px);
+    }
+
+    .im-ready-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ready-hint {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.5);
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .waiting-title {
+        font-size: 1.8rem;
+        letter-spacing: 3px;
+      }
+
+      .waiting-room-content {
+        padding: 30px 20px;
+      }
+
+      .players-ready-status {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .vs-divider {
+        transform: rotate(90deg);
+        margin: 10px 0;
+      }
+
+      .im-ready-btn {
+        padding: 15px 40px;
+        font-size: 1.1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -704,6 +1006,51 @@
       <h1 class="game-title">POLY RACE</h1>
       <p class="game-subtitle">Type. Race. Win.</p>
       <p class="game-instruction" id="start-instruction">PRESS SPACE TO START</p>
+    </div>
+
+    <!-- Online Waiting Room (shown in online mode before race starts) -->
+    <div id="online-waiting-room" style="display: none;">
+      <div class="waiting-room-content">
+        <h1 class="waiting-title">
+          <span style="color: #00ffff;">MULTIPLAYER</span> LOBBY
+        </h1>
+
+        <!-- Invite Link Section -->
+        <div class="invite-section">
+          <p class="invite-label">INVITE PLAYER</p>
+          <div class="invite-link-container">
+            <input type="text" id="game-invite-link" class="invite-link-input" readonly />
+            <button id="copy-game-link-btn" class="copy-link-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              COPY
+            </button>
+          </div>
+        </div>
+
+        <!-- Players Ready Status -->
+        <div class="players-ready-status">
+          <div class="player-status" id="player1-status">
+            <div class="player-status-icon">👤</div>
+            <div class="player-status-name" id="player1-name">Player 1</div>
+            <div class="player-status-badge waiting" id="player1-badge">WAITING...</div>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="player-status" id="player2-status">
+            <div class="player-status-icon">👤</div>
+            <div class="player-status-name" id="player2-name">Waiting for player...</div>
+            <div class="player-status-badge empty" id="player2-badge">EMPTY</div>
+          </div>
+        </div>
+
+        <!-- Ready Button -->
+        <button id="im-ready-btn" class="im-ready-btn" disabled>
+          <span class="btn-text">I'M READY</span>
+        </button>
+        <p class="ready-hint" id="ready-hint">Waiting for opponent to join...</p>
+      </div>
     </div>
 
     <!-- Stats HUD (shown during gameplay) -->
@@ -1877,7 +2224,8 @@ PolyRaceScene.init=function(){
   this.updateUIState();
 
   // Auto-start countdown after 1.5 seconds if coming from mode selection
-  if(urlMode) {
+  // BUT NOT for online mode (online needs manual ready check)
+  if(urlMode && urlMode !== 'online') {
     setTimeout(() => {
       if(this.STATE === "menu") {
         this.startCountdown();
@@ -2491,7 +2839,105 @@ class GameWorld {
           }
           console.log("[MULTIPLAYER] Updated player colors and usernames in scene");
         }
+
+        // Show waiting room and populate invite link
+        showWaitingRoom(data.room);
       }
+    });
+
+    // --- Waiting Room Logic ---
+    function showWaitingRoom(room) {
+      const waitingRoom = document.getElementById('online-waiting-room');
+      const inviteLinkInput = document.getElementById('game-invite-link');
+      const copyBtn = document.getElementById('copy-game-link-btn');
+      const readyBtn = document.getElementById('im-ready-btn');
+      const readyHint = document.getElementById('ready-hint');
+
+      // Generate and show invite link
+      const inviteLink = `https://polyracer-production.up.railway.app/game.html?mode=online&room=${roomCode}`;
+      inviteLinkInput.value = inviteLink;
+
+      // Copy link handler
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(inviteLink);
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> COPIED!';
+          copyBtn.style.borderColor = '#00ff88';
+          copyBtn.style.color = '#00ff88';
+
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.style.borderColor = '';
+            copyBtn.style.color = '';
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy link:', err);
+        }
+      });
+
+      // Update player status
+      updatePlayerStatus(room);
+
+      // Show waiting room
+      waitingRoom.classList.add('active');
+
+      // I'M READY button handler
+      readyBtn.addEventListener('click', () => {
+        console.log('[WAITING-ROOM] Player clicked I\'M READY');
+        socket.emit('player:game-ready');
+        readyBtn.disabled = true;
+        readyBtn.innerHTML = '<span class="btn-text">WAITING FOR OPPONENT...</span>';
+        readyHint.textContent = 'Waiting for other player to ready up...';
+      });
+    }
+
+    function updatePlayerStatus(room) {
+      const player1Name = document.getElementById('player1-name');
+      const player1Badge = document.getElementById('player1-badge');
+      const player1Status = document.getElementById('player1-status');
+
+      const player2Name = document.getElementById('player2-name');
+      const player2Badge = document.getElementById('player2-badge');
+      const player2Status = document.getElementById('player2-status');
+
+      const readyBtn = document.getElementById('im-ready-btn');
+      const readyHint = document.getElementById('ready-hint');
+
+      if (room.players.length >= 1) {
+        const player1 = room.players[0];
+        player1Name.textContent = player1.name;
+        player1Badge.textContent = player1.gameReady ? 'READY' : 'WAITING...';
+        player1Badge.className = 'player-status-badge ' + (player1.gameReady ? 'ready' : 'waiting');
+        if (player1.gameReady) player1Status.classList.add('ready');
+      }
+
+      if (room.players.length >= 2) {
+        const player2 = room.players[1];
+        player2Name.textContent = player2.name;
+        player2Badge.textContent = player2.gameReady ? 'READY' : 'WAITING...';
+        player2Badge.className = 'player-status-badge ' + (player2.gameReady ? 'ready' : 'waiting');
+        if (player2.gameReady) player2Status.classList.add('ready');
+
+        // Enable ready button since we have 2 players
+        readyBtn.disabled = false;
+        readyHint.textContent = 'Click when you\'re ready to race!';
+      } else {
+        player2Name.textContent = 'Waiting for player...';
+        player2Badge.textContent = 'EMPTY';
+        player2Badge.className = 'player-status-badge empty';
+        player2Status.classList.remove('ready');
+
+        // Disable ready button if we don't have 2 players
+        readyBtn.disabled = true;
+        readyHint.textContent = 'Waiting for opponent to join...';
+      }
+    }
+
+    // Update when players join or ready up
+    socket.on('game:players-update', (data) => {
+      console.log('[WAITING-ROOM] Players update:', data);
+      updatePlayerStatus({ players: data.players });
     });
 
     socket.on("room:sync", (data) => {
@@ -2516,6 +2962,12 @@ class GameWorld {
             scene.players[1].color = opponentColor;
             scene.players[1].username = opponentPlayer.name;
           }
+        }
+
+        // If room is in-game-lobby state, show waiting room
+        if (data.room.gameState === 'in-game-lobby') {
+          console.log('[SYNC] Room is in-game-lobby state, showing waiting room');
+          showWaitingRoom(data.room);
         }
       }
     });
@@ -2614,40 +3066,60 @@ class GameWorld {
       }
     });
 
-    // --- Sync Countdown ---
+    // --- Lobby Countdown (from modes.html ready) ---
     socket.on("game:countdown", () => {
-      const scene = game.current_scene;
-      console.log("[MULTIPLAYER] Countdown event received, scene state:", scene?.STATE);
-
-      if (scene) {
-        // Force start countdown if not already started
-        if (scene.STATE === "menu" || scene.STATE === "countdown") {
-          console.log("[MULTIPLAYER] Starting countdown animation");
-          scene.STATE = "countdown";
-          scene.countIndex = 0;
-          scene.countStart = new Date();
-          scene.updateUIState();
-        }
-      }
+      console.log("[LOBBY] Countdown event - will redirect to game soon");
+      // This is for lobby countdown, handled by modes.html
     });
 
     socket.on("game:start", () => {
+      console.log("[LOBBY] Game start - already in game, showing waiting room");
+      // This redirects from lobby to game, we're already here
+    });
+
+    // --- Game Verified Countdown (after both players ready in game) ---
+    socket.on("game:verified-countdown", (data) => {
+      console.log("[GAME] Verified countdown - all players synced and ready!");
+
+      // Hide waiting room
+      const waitingRoom = document.getElementById('online-waiting-room');
+      waitingRoom.classList.remove('active');
+
+      // Start countdown animation
       const scene = game.current_scene;
       if (scene) {
-        console.log("[MULTIPLAYER] Game start signal received! Starting race...");
+        console.log("[GAME] Starting countdown animation");
+        scene.STATE = "countdown";
+        scene.countIndex = 0;
+        scene.countStart = new Date();
+        scene.updateUIState();
+      }
+    });
 
+    // --- Race Start (after countdown finishes) ---
+    socket.on("game:race-start", (data) => {
+      console.log("[RACE] Race start! Go go go!");
+
+      const scene = game.current_scene;
+      if (scene) {
         // Force the game to running state
         scene.STATE = "running";
         scene.raceStartTime = Date.now();
         scene.updateUIState();
 
-        console.log("[MULTIPLAYER] Race started! Scene STATE:", scene.STATE);
-        console.log("[MULTIPLAYER] Players in scene:", scene.players.length);
-        console.log("[MULTIPLAYER] Player 0 (local):", scene.players[0] ? "Ready" : "Missing");
-        console.log("[MULTIPLAYER] Player 1 (opponent):", scene.players[1] ? "Ready" : "Missing");
+        console.log("[RACE] Race started! Scene STATE:", scene.STATE);
+        console.log("[RACE] Players in scene:", scene.players.length);
+        console.log("[RACE] Player 0 (local):", scene.players[0] ? "Ready" : "Missing");
+        console.log("[RACE] Player 1 (opponent):", scene.players[1] ? "Ready" : "Missing");
       } else {
-        console.error("[MULTIPLAYER] No scene available when game:start received!");
+        console.error("[RACE] No scene available when race:start received!");
       }
+    });
+
+    // --- Sync Failed ---
+    socket.on("game:sync-failed", (data) => {
+      console.error("[GAME] Sync failed:", data.message);
+      alert(data.message + '\n\nPlease refresh and try again.');
     });
 
     // --- Handle win state ---
@@ -2670,6 +3142,46 @@ class GameWorld {
         };
 
         scene.showWinScreen();
+      }
+    });
+
+    // --- Rematch handler ---
+    socket.on("room:reset", (data) => {
+      console.log("[REMATCH] Room reset for rematch!");
+
+      // Hide win screen
+      const winScreen = document.getElementById('win-screen');
+      if (winScreen) {
+        winScreen.classList.remove('active');
+      }
+
+      // Reset scene state
+      const scene = game.current_scene;
+      if (scene) {
+        scene.STATE = "menu";
+        scene.winner = null;
+        scene.canRestart = false;
+        scene.updateUIState();
+
+        // Reset players
+        scene.players.forEach(p => {
+          p.body.position.x = p.startX;
+          p.score = 0;
+          p.combo = 0;
+          p.progressPercent = 0;
+          p.hasFinished = false;
+        });
+      }
+
+      // Show waiting room again for rematch
+      console.log('[REMATCH] Showing waiting room for rematch');
+      showWaitingRoom(data.room);
+
+      // Reset ready button
+      const readyBtn = document.getElementById('im-ready-btn');
+      if (readyBtn) {
+        readyBtn.disabled = data.room.players.length < 2;
+        readyBtn.innerHTML = '<span class="btn-text">I\'M READY</span>';
       }
     });
 
