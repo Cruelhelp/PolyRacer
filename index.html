@@ -1225,6 +1225,18 @@
 
       entriesContainer.innerHTML = '';
 
+      // Show "coming soon" message if leaderboard is empty
+      if (!leaderboardData || leaderboardData.length === 0) {
+        entriesContainer.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.5);">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🏆</div>
+            <div style="font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 10px;">LEADERBOARD COMING SOON</div>
+            <div style="font-size: 0.9rem; letter-spacing: 1px; opacity: 0.7;">Play multiplayer matches to climb the ranks!</div>
+          </div>
+        `;
+        return;
+      }
+
       leaderboardData.slice(0, 10).forEach((player, index) => {
         const entry = document.createElement('div');
         entry.className = 'leaderboard-entry';
@@ -1269,7 +1281,7 @@
   <script>
     // Connect to server to track online players
     (function() {
-      const serverUrl = 'https://polyracer-production.up.railway.app';
+      const serverUrl = window.location.origin; // Dynamic URL for localhost and Railway
       const playersOnlineEl = document.getElementById('players-online');
 
       // Generate or get stored anonymous ID
