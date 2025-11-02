@@ -3207,10 +3207,24 @@ if (mode === "online") {
     // Start countdown animation
     const scene = game.current_scene;
     if (scene) {
+      console.log("[MP] Setting scene to countdown state");
       scene.STATE = "countdown";
       scene.countIndex = 0;
       scene.countStart = new Date(serverCountdownStart); // Use server time
+
+      // Ensure players are initialized
+      if (!scene.players || scene.players.length === 0) {
+        console.log("[MP] Initializing players for countdown");
+        scene.initPlayers();
+      }
+
+      // Update UI to show countdown
       scene.updateUIState();
+      scene.startCountdown(); // Start the countdown sequence
+
+      console.log("[MP] Countdown initialized, players:", scene.players.length);
+    } else {
+      console.error("[MP] No scene found for countdown!");
     }
   });
 
@@ -3220,11 +3234,19 @@ if (mode === "online") {
 
     const scene = game.current_scene;
     if (scene) {
+      console.log("[MP] Transitioning to running state");
       scene.STATE = "running";
       scene.raceStartTime = data.room.startTime; // Use server start time
-      scene.updateUIState();
 
-      console.log("[MP] Race started! Players:", scene.players.length);
+      // Ensure players are ready
+      if (scene.players && scene.players.length > 0) {
+        scene.players.forEach((p, idx) => {
+          console.log(`[MP] Player ${idx}: position=${p.body.position.x}, progress=${p.progressPercent}`);
+        });
+      }
+
+      scene.updateUIState();
+      console.log("[MP] Race started! STATE:", scene.STATE, "Players:", scene.players.length);
     } else {
       console.error("[MP] No scene when race started!");
     }
