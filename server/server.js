@@ -14,6 +14,11 @@ const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
+  },
+  // Enable connection state recovery
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+    skipMiddlewares: true,
   }
 });
 
@@ -131,6 +136,13 @@ io.on('connection', (socket) => {
     if (!room) {
       console.error(`[JOIN] Room ${roomCode} not found`);
       return io.to(socketId).emit('room:error', { message: 'Room not found' });
+    }
+
+    // Cancel deletion timeout if room was scheduled for deletion
+    if (room.deleteTimeout) {
+      clearTimeout(room.deleteTimeout);
+      room.deleteTimeout = null;
+      console.log(`[JOIN] Cancelled deletion of room ${roomCode}`);
     }
 
     // Check if already in room
@@ -361,8 +373,14 @@ io.on('connection', (socket) => {
       });
 
       if (room.players.length === 0) {
-        rooms.delete(player.roomCode);
-        console.log(`[DELETE] Room ${player.roomCode} deleted (empty)`);
+        // Don't delete immediately - wait 60 seconds for reconnection
+        console.log(`[EMPTY] Room ${player.roomCode} is empty, scheduling deletion in 60s...`);
+        room.deleteTimeout = setTimeout(() => {
+          if (rooms.has(player.roomCode) && room.players.length === 0) {
+            rooms.delete(player.roomCode);
+            console.log(`[DELETE] Room ${player.roomCode} deleted (timeout)`);
+          }
+        }, 60000); // 60 seconds grace period
       } else {
         console.log(`[LEAVE] ${player.name} left room ${player.roomCode}`);
       }
@@ -409,29 +427,11 @@ app.get('/health', (req, res) => {
 
 // ===== SERVE PAGES =====
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'landing.html'));
+  res.sendFile(path.join(__dirname, '..', 'modes.html'));
 });
 
-app.get('/game', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+app.get('/game.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'game.html'));
 });
 
-// ===== START SERVER =====
-httpServer.listen(port, () => {
-  console.log(`
-╔═══════════════════════════════════════╗
-║   POLY RACE MULTIPLAYER SERVER V2    ║
-╠═══════════════════════════════════════╣
-║  Server: http://localhost:${port}      ║
-║  Status: ✅ READY                      ║
-╚═══════════════════════════════════════╝
-  `);
-});
-
-process.on('SIGINT', () => {
-  console.log('\nShutting down server...');
-  httpServer.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
+app.get('/modes', (req, res) => {
