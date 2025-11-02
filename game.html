@@ -3139,41 +3139,65 @@ if (mode === "online") {
     console.log("[MP] Room updated:", data.room);
     roomData = data.room;
     updatePlayerStatus(roomData);
+    
+    // Check if both players are ready and in waiting room
+    if (roomData.players.length === 2 && 
+        roomData.players.every(p => p.ready) && 
+        roomData.gameState === 'waiting') {
+      console.log("[MP] Both players ready! Waiting for server countdown...");
+    }
+  });
+
+  // Listen for BOTH possible countdown events (for compatibility)
+  socket.on("game:countdown", (data) => {
+    console.log("[MP] Received game:countdown event");
+    handleCountdownStart(data);
   });
 
   socket.on("game:countdown-start", (data) => {
+    console.log("[MP] Received game:countdown-start event");
+    handleCountdownStart(data);
+  });
+
+  function handleCountdownStart(data) {
     console.log("[MP] Countdown starting!", data);
     roomData = data.room;
 
+    // Hide waiting room
     const waitingRoom = document.getElementById('online-waiting-room');
     waitingRoom.classList.remove('active');
-
-    const serverCountdownStart = data.countdownStartTime;
-    const now = Date.now();
-    const clientDelay = now - serverCountdownStart;
-
-    console.log(`[MP] Countdown started ${clientDelay}ms ago (latency compensation)`);
 
     const scene = game.current_scene;
     if (scene) {
       console.log("[MP] Setting scene to countdown state");
-      scene.STATE = "countdown";
-      scene.countIndex = 0;
-      scene.countStart = new Date(serverCountdownStart);
-
+      
+      // Initialize players if not already done
       if (!scene.players || scene.players.length === 0) {
         console.log("[MP] Initializing players for countdown");
         scene.initPlayers();
       }
 
+      // Set player names from room data
+      if (roomData && roomData.players) {
+        roomData.players.forEach((playerData, index) => {
+          if (scene.players[index]) {
+            scene.players[index].username = playerData.name;
+            console.log(`[MP] Set player ${index} name: ${playerData.name}`);
+          }
+        });
+      }
+
+      // Start the countdown immediately (3-2-1-GO)
+      scene.STATE = "countdown";
+      scene.countIndex = 0;
+      scene.countStart = new Date();
       scene.updateUIState();
-      scene.startCountdown();
 
       console.log("[MP] Countdown initialized, players:", scene.players.length);
     } else {
       console.error("[MP] No scene found for countdown!");
     }
-  });
+  }
 
   socket.on("game:race-start", (data) => {
     console.log("[MP] Race starting NOW!");
