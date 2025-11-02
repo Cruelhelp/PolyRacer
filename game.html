@@ -518,12 +518,11 @@
 
       #key-indicator {
         gap: 20px;
-        bottom: 240px; /* Make room for mobile keyboard */
+        bottom: 240px;
         flex-wrap: wrap;
         justify-content: center;
       }
 
-      /* Adjust when keyboard is visible */
       #game-canvas.keyboard-visible ~ #game-hud #key-indicator {
         bottom: 260px;
       }
@@ -591,7 +590,7 @@
 
       #key-indicator {
         gap: 15px;
-        bottom: 220px; /* More room for mobile keyboard */
+        bottom: 220px;
       }
 
       #game-canvas.keyboard-visible ~ #game-hud #key-indicator {
@@ -1253,18 +1252,16 @@ if (mobileControlsActive) {
       startInstruction.textContent = 'TAP ANYWHERE TO START';
     }
 
-    let currentGameType = 'letters'; // letters, double, words, story
+    let currentGameType = 'letters';
     let homeRowKeys = [];
     let keyboardInitialized = false;
 
-    // Detect game type from URL
     const urlParams = new URLSearchParams(window.location.search);
     const gameType = urlParams.get('type') || 'letters';
     currentGameType = gameType;
 
     console.log('[MOBILE] Game type:', currentGameType);
 
-    // Generate home row keyboard for letter modes
     function generateHomeRowKeyboard() {
       if (!homeRowKeyboard) return;
 
@@ -1273,11 +1270,9 @@ if (mobileControlsActive) {
       let keys;
 
       if (currentGameType === 'double') {
-        // Single letters for double mode - show all letters used in combinations
         keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
         homeRowKeys = keys;
       } else {
-        // Single letters for single letter mode (home row + common letters)
         keys = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
         homeRowKeys = keys;
       }
@@ -1293,18 +1288,15 @@ if (mobileControlsActive) {
       console.log('[MOBILE] Home row keyboard generated for type:', currentGameType);
     }
 
-    // Setup keyboard based on game type
     function setupKeyboard() {
       if (keyboardInitialized) return;
 
       if (currentGameType === 'letters' || currentGameType === 'double') {
-        // Use home row keyboard
         generateHomeRowKeyboard();
         homeRowKeyboard.style.display = 'flex';
         fullKeyboard.style.display = 'none';
         mobileHint.textContent = 'TAP THE KEYS TO TYPE';
       } else {
-        // Use full keyboard for words/story
         homeRowKeyboard.style.display = 'none';
         fullKeyboard.style.display = 'flex';
         mobileHint.textContent = 'USE KEYBOARD TO TYPE';
@@ -1314,12 +1306,10 @@ if (mobileControlsActive) {
       console.log('[MOBILE] Keyboard setup complete');
     }
 
-    // Handle key button press
     function handleKeyPress(key) {
       const scene = game?.current_scene;
       if (!scene || scene.STATE !== "running") return;
 
-      // Simulate key press
       const keyDownEvent = new KeyboardEvent('keydown', {
         key: key,
         code: 'Key' + key.toUpperCase(),
@@ -1327,7 +1317,6 @@ if (mobileControlsActive) {
       });
       document.dispatchEvent(keyDownEvent);
 
-      // Visual feedback
       const btn = document.querySelector(`[data-key="${key}"]`);
       if (btn) {
         btn.classList.add('active');
@@ -1336,7 +1325,6 @@ if (mobileControlsActive) {
         }, 150);
       }
 
-      // Release key after short delay
       setTimeout(() => {
         const keyUpEvent = new KeyboardEvent('keyup', {
           key: key,
@@ -1347,7 +1335,6 @@ if (mobileControlsActive) {
       }, 100);
     }
 
-    // Highlight active key based on current letter needed
     function updateKeyboardHighlight(scene) {
       if (!scene || !scene.players || !scene.players[0]) return;
 
@@ -1360,22 +1347,18 @@ if (mobileControlsActive) {
         nextKey = player.nextKey;
       }
 
-      // Remove all active highlights
       document.querySelectorAll('.key-button').forEach(btn => {
         btn.classList.remove('active');
       });
 
-      // Add active highlight to next key
       if (nextKey) {
         const btn = document.querySelector(`[data-key="${nextKey.toLowerCase()}"]`);
         if (btn) {
           btn.classList.add('active');
-          console.log('[MOBILE] Highlighting key:', nextKey);
         }
       }
     }
 
-    // Setup event listeners for all keys
     function setupKeyEventListeners() {
       document.querySelectorAll('.key-button').forEach(btn => {
         btn.addEventListener('touchstart', (e) => {
@@ -1384,14 +1367,12 @@ if (mobileControlsActive) {
           handleKeyPress(key);
         });
 
-        // Prevent default behavior
         btn.addEventListener('touchend', (e) => {
           e.preventDefault();
         });
       });
     }
 
-    // Show mobile controls during gameplay
     function updateMobileControls(scene) {
       if (!scene || !mobileControls) return;
 
@@ -1403,57 +1384,13 @@ if (mobileControlsActive) {
 
         mobileControls.classList.add('active');
         gameCanvas.classList.add('keyboard-visible');
-
-        // Update keyboard highlight
         updateKeyboardHighlight(scene);
-
-        // Adjust canvas size for keyboard
-        adjustCanvasForKeyboard();
       } else {
         mobileControls.classList.remove('active');
         gameCanvas.classList.remove('keyboard-visible');
-
-        // Restore canvas size
-        restoreCanvasSize();
       }
     }
 
-    // Adjust canvas rendering area when keyboard is visible
-    function adjustCanvasForKeyboard() {
-      // Don't resize canvas - let Visual Viewport API handle it naturally
-      // The keyboard overlay is positioned with CSS and won't squash the scene
-      console.log('[MOBILE] Keyboard visible - using CSS overlay positioning');
-    }
-
-    // Restore canvas to full size
-    function restoreCanvasSize() {
-      // Canvas size is managed by Visual Viewport API resize handler
-      // No manual restoration needed
-      console.log('[MOBILE] Keyboard hidden - canvas managed by viewport API');
-    }
-
-    // Legacy restore function (keeping structure for compatibility)
-    function restoreCanvasSizeLegacy() {
-      const game = window.game;
-      if (!game) return;
-
-      const fullHeight = window.innerHeight;
-
-      if (game.H !== fullHeight) {
-        game.H = fullHeight;
-        game.canvas.height = fullHeight;
-
-        // Update scene dimensions
-        const scene = game.current_scene;
-        if (scene) {
-          scene.world.H = fullHeight;
-        }
-
-        console.log('[MOBILE] Canvas restored to full size:', fullHeight);
-      }
-    }
-
-    // Update controls in game loop
     setInterval(() => {
       const scene = game?.current_scene;
       if (scene) {
@@ -1461,10 +1398,8 @@ if (mobileControlsActive) {
       }
     }, 100);
 
-    // Handle menu/win state taps - WAIT FOR USER INTERACTION
     let canStartGame = false;
 
-    // Wait a moment before allowing game start (prevents auto-start)
     setTimeout(() => {
       canStartGame = true;
       console.log('[MOBILE] Ready to start game');
@@ -1474,18 +1409,16 @@ if (mobileControlsActive) {
       const scene = game?.current_scene;
       if (!scene) return;
 
-      // Only allow start if enough time has passed
       if (scene.STATE === "menu" && canStartGame) {
         e.preventDefault();
         console.log('[MOBILE] Starting countdown via tap');
         scene.startCountdown();
-        canStartGame = false; // Prevent multiple taps
+        canStartGame = false;
       } else if (scene.STATE === "win" && scene.canRestart) {
         e.preventDefault();
         console.log('[MOBILE] Restarting game via tap');
         game.startScene("PolyRace");
         canStartGame = false;
-        // Re-enable after delay
         setTimeout(() => {
           canStartGame = true;
         }, 1000);
@@ -1575,7 +1508,7 @@ class Entity {
 }
 
 // ============================================
-// Particle System
+// OPTIMIZED Particle System
 // ============================================
 class Particle {
   constructor(x, y, color, vx, vy) {
@@ -1585,23 +1518,20 @@ class Particle {
     this.vx = vx;
     this.vy = vy;
     this.life = 1;
-    this.size = Util.random(2, 6);
+    this.size = Util.random(2, 4); // REDUCED from 2-6
   }
   update() {
     this.x += this.vx;
     this.y += this.vy;
     this.vy += 0.2;
-    this.life -= 0.02;
+    this.life -= 0.03; // FASTER decay (was 0.02)
   }
   draw(ctx) {
     if (this.life <= 0) return;
-    ctx.save();
     ctx.globalAlpha = this.life;
     ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 15;
+    // REMOVED shadow for massive performance gain
     ctx.fillRect(this.x, this.y, this.size, this.size);
-    ctx.restore();
   }
 }
 
@@ -1630,21 +1560,16 @@ class Runner extends Entity {
     this.progressPercent=0;
     this.animTime=0;
 
-    // Word mode tracking
     this.wordProgress=0;
     this.isWordMode = this.keySet.length > 10;
 
-    // Champion status
     this.hasChampionStatus = false;
-
-    // Finish tracking (for multiplayer)
     this.hasFinished = false;
 
-    // Speed bonus system
     this.speedBonus = 0;
     this.speedBonusAlpha = 0;
     this.speedBonusText = '';
-    this.comboTimeout = 1500; // Reset combo if no key for 1.5 seconds
+    this.comboTimeout = 1500;
   }
 
   getNewKey(){
@@ -1671,44 +1596,37 @@ class Runner extends Entity {
         this.keySpeed = timeSinceLastKey;
         this.lastKeyTime = now;
 
-        // Speed-based bonus system
         let forceMultiplier = 1;
         let basePoints = 10;
         let speedBonus = 0;
         let speedText = '';
 
         if(this.lastKeyTime === 0 || timeSinceLastKey > 2000) {
-          // First key or after long pause - no bonus
           forceMultiplier = 1;
         } else if(timeSinceLastKey < 150) {
-          // BLAZING - under 150ms
           forceMultiplier = 1.5;
           speedBonus = 25;
           speedText = 'BLAZING!';
         } else if(timeSinceLastKey < 250) {
-          // FAST - under 250ms
           forceMultiplier = 1.3;
           speedBonus = 15;
           speedText = 'FAST!';
         } else if(timeSinceLastKey < 400) {
-          // GOOD - under 400ms
           forceMultiplier = 1.15;
           speedBonus = 8;
           speedText = 'GOOD';
         } else if(timeSinceLastKey < 600) {
-          // OK - under 600ms
           forceMultiplier = 1.05;
           speedBonus = 3;
           speedText = '';
         }
 
-        this.body.applyForce(new Vector(65 * forceMultiplier, 0)); // Increased from 38 for faster races
+        this.body.applyForce(new Vector(65 * forceMultiplier, 0));
         this.popAlpha=1;
 
         const totalPoints = basePoints + speedBonus + (this.combo * 2);
         this.score += totalPoints;
 
-        // Show speed bonus feedback
         if(speedText) {
           this.speedBonusText = speedText;
           this.speedBonusAlpha = 1;
@@ -1754,44 +1672,37 @@ class Runner extends Entity {
         this.keySpeed = timeSinceLastKey;
         this.lastKeyTime = now;
 
-        // Speed-based bonus system
         let forceMultiplier = 1;
         let basePoints = 10;
         let speedBonus = 0;
         let speedText = '';
 
         if(this.lastKeyTime === 0 || timeSinceLastKey > 2000) {
-          // First key or after long pause - no bonus
           forceMultiplier = 1;
         } else if(timeSinceLastKey < 150) {
-          // BLAZING - under 150ms
           forceMultiplier = 1.5;
           speedBonus = 25;
           speedText = 'BLAZING!';
         } else if(timeSinceLastKey < 250) {
-          // FAST - under 250ms
           forceMultiplier = 1.3;
           speedBonus = 15;
           speedText = 'FAST!';
         } else if(timeSinceLastKey < 400) {
-          // GOOD - under 400ms
           forceMultiplier = 1.15;
           speedBonus = 8;
           speedText = 'GOOD';
         } else if(timeSinceLastKey < 600) {
-          // OK - under 600ms
           forceMultiplier = 1.05;
           speedBonus = 3;
           speedText = '';
         }
 
-        this.body.applyForce(new Vector(65 * forceMultiplier, 0)); // Increased from 38 for faster races
+        this.body.applyForce(new Vector(65 * forceMultiplier, 0));
         this.popAlpha=1;
 
         const totalPoints = basePoints + speedBonus + (this.combo * 2);
         this.score += totalPoints;
 
-        // Show speed bonus feedback
         if(speedText) {
           this.speedBonusText = speedText;
           this.speedBonusAlpha = 1;
@@ -1835,10 +1746,14 @@ class Runner extends Entity {
     osc.stop(this.world.audioCtx.currentTime + 0.1);
   }
 
+  // OPTIMIZED: Reduce particle count by 50%
   spawnParticles(count) {
-    for(let i = 0; i < count; i++) {
+    const maxParticles = 30; // Particle limit
+    const actualCount = Math.min(count * 0.5, maxParticles); // Reduce by 50%
+    
+    for(let i = 0; i < actualCount; i++) {
       const angle = Util.random(0, Math.PI * 2);
-      const speed = Util.random(2, 8);
+      const speed = Util.random(2, 6); // Reduced from 2-8
       this.particles.push(new Particle(
         this.body.position.x,
         this.body.position.y,
@@ -1846,6 +1761,11 @@ class Runner extends Entity {
         Math.cos(angle) * speed,
         Math.sin(angle) * speed - 3
       ));
+    }
+    
+    // Cull old particles if too many
+    if (this.particles.length > maxParticles) {
+      this.particles = this.particles.slice(-maxParticles);
     }
   }
 
@@ -1855,7 +1775,7 @@ class Runner extends Entity {
     this.progressPercent = Math.min(100, (progress / target) * 100);
 
     if(progress >= target && !this.hasFinished){
-      this.hasFinished = true; // Prevent multiple finish emissions
+      this.hasFinished = true;
 
       this.scene.STATE="win";
       this.scene.winner=this.scene.players.indexOf(this);
@@ -1864,10 +1784,8 @@ class Runner extends Entity {
         maxCombo: this.maxCombo
       };
 
-      // Emit finish event in online mode (handled by multiplayer script)
       if(this.scene.selectedMode === "online" && this.playerNum === 1) {
         console.log("[MULTIPLAYER] Local player finished!");
-        // The socket emit is handled in the multiplayer script section
         if(window.multiplayerSocket) {
           window.multiplayerSocket.emit("player:finished");
         }
@@ -1881,16 +1799,13 @@ class Runner extends Entity {
     if(this.wrongKeyPenalty>0) this.wrongKeyPenalty-=0.3;
     if(this.body.velocity.x > 0.5) this.animTime += 0.15;
 
-    // Speed bonus fade out
     if(this.speedBonusAlpha > 0) this.speedBonusAlpha -= 0.02;
 
-    // Timeout detection - reset combo if typing too slow
     if(this.scene.STATE === "running" && this.combo > 0) {
       const timeSinceLastKey = Date.now() - this.lastKeyTime;
       if(timeSinceLastKey > this.comboTimeout) {
-        console.log('[BONUS] Combo timeout - typing too slow!');
         this.combo = 0;
-        this.wrongKeyPenalty = 5; // Small visual feedback
+        this.wrongKeyPenalty = 5;
       }
     }
 
@@ -1945,16 +1860,13 @@ class Runner extends Entity {
     const dark = this.darkenColor(this.color, 30);
     const shade = this.darkenColor(this.color, 50);
 
-    // Champion cape (drawn behind everything)
     if(this.hasChampionStatus){
       this.drawCape(ctx, x + lean, torsoTop + 8, phase, S);
     }
 
-    // Draw back limbs
     this.drawLeg(ctx, x, torsoBot, legOpp - 10, -8, dark, shade, true, S);
     this.drawArm(ctx, x + lean, torsoTop + 14, armOpp - 35, -14, dark, shade, true, S);
 
-    // Torso
     this.poly([
       {x: x - torsoW/2 + lean, y: torsoTop},
       {x: x + torsoW/2 + lean, y: torsoTop},
@@ -1969,7 +1881,6 @@ class Runner extends Entity {
       {x: x + torsoW/2 - 2, y: torsoBot}
     ], dark);
 
-    // Head
     const headX = x + lean + 10;
     const headY = torsoTop - headH - 2;
 
@@ -1995,11 +1906,9 @@ class Runner extends Entity {
       {x: headX, y: headY + 8}
     ], main);
 
-    // Draw front limbs
     this.drawLeg(ctx, x, torsoBot, legSwing + 10, 8, main, dark, false, S);
     this.drawArm(ctx, x + lean, torsoTop + 14, armSwing + 20, -10, main, dark, false, S);
 
-    // Champion crown (drawn on top)
     if(this.hasChampionStatus){
       this.drawCrown(ctx, headX, headY - 12, S);
     }
@@ -2064,6 +1973,7 @@ class Runner extends Entity {
     ctx.shadowBlur = 0;
   }
 
+  // OPTIMIZED: Reduced joint detail from 6 to 4 points
   drawLeg(ctx, x, hipY, angle, offsetX, color1, color2, isBack, S) {
     const a = angle * Math.PI / 180;
     const thighLen = 30 * S;
@@ -2082,7 +1992,6 @@ class Runner extends Entity {
 
     if (isBack) ctx.globalAlpha = 0.4;
 
-    // Thigh
     const thighAngle = Math.atan2(kneeX - hipX, kneeY - hipY);
     const thighPerpX = Math.cos(thighAngle) * legW/2;
     const thighPerpY = -Math.sin(thighAngle) * legW/2;
@@ -2094,10 +2003,10 @@ class Runner extends Entity {
       {x: kneeX - thighPerpX, y: kneeY - thighPerpY}
     ], color1);
 
-    // Knee joint
+    // OPTIMIZED: Reduced from 6 to 4 points
     const kneePts = [];
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2;
+    for (let i = 0; i < 4; i++) {
+      const ang = (i / 4) * Math.PI * 2;
       kneePts.push({
         x: kneeX + Math.cos(ang) * kneeW/2,
         y: kneeY + Math.sin(ang) * kneeW/2
@@ -2105,7 +2014,6 @@ class Runner extends Entity {
     }
     this.poly(kneePts, this.lightenColor(this.color, 20));
 
-    // Shin
     const shinAngle = Math.atan2(ankleX - kneeX, ankleY - kneeY);
     const shinPerpX = Math.cos(shinAngle) * (legW-2)/2;
     const shinPerpY = -Math.sin(shinAngle) * (legW-2)/2;
@@ -2117,7 +2025,6 @@ class Runner extends Entity {
       {x: ankleX - shinPerpX, y: ankleY - shinPerpY}
     ], color2);
 
-    // Foot
     this.poly([
       {x: ankleX - 8, y: ankleY},
       {x: ankleX + 18, y: ankleY},
@@ -2128,6 +2035,7 @@ class Runner extends Entity {
     if (isBack) ctx.globalAlpha = 1.0;
   }
 
+  // OPTIMIZED: Reduced joint detail from 6 to 4 points
   drawArm(ctx, shoulderX, shoulderY, angle, offsetX, color1, color2, isBack, S) {
     const a = angle * Math.PI / 180;
     const upperLen = 24 * S;
@@ -2146,7 +2054,6 @@ class Runner extends Entity {
 
     if (isBack) ctx.globalAlpha = 0.4;
 
-    // Upper arm
     const upperAngle = Math.atan2(elbowX - shoulderX, elbowY - shoulderY);
     const upperPerpX = Math.cos(upperAngle) * armW/2;
     const upperPerpY = -Math.sin(upperAngle) * armW/2;
@@ -2158,10 +2065,10 @@ class Runner extends Entity {
       {x: elbowX - upperPerpX, y: elbowY - upperPerpY}
     ], color1);
 
-    // Elbow joint
+    // OPTIMIZED: Reduced from 6 to 4 points
     const elbowPts = [];
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2;
+    for (let i = 0; i < 4; i++) {
+      const ang = (i / 4) * Math.PI * 2;
       elbowPts.push({
         x: elbowX + Math.cos(ang) * elbowW/2,
         y: elbowY + Math.sin(ang) * elbowW/2
@@ -2169,7 +2076,6 @@ class Runner extends Entity {
     }
     this.poly(elbowPts, this.lightenColor(this.color, 20));
 
-    // Forearm
     const foreAngle = Math.atan2(handX - elbowX, handY - elbowY);
     const forePerpX = Math.cos(foreAngle) * (armW-2)/2;
     const forePerpY = -Math.sin(foreAngle) * (armW-2)/2;
@@ -2181,7 +2087,6 @@ class Runner extends Entity {
       {x: handX - forePerpX, y: handY - forePerpY}
     ], color2);
 
-    // Hand
     this.poly([
       {x: handX - 7, y: handY},
       {x: handX + 7, y: handY},
@@ -2212,10 +2117,9 @@ class Runner extends Entity {
   }
 
   drawHUD(ctx){
-    // Only draw HUD for player 1 (local player) in online mode
     const scene = this.scene;
     if(scene.selectedMode === "online" && this.playerNum !== 1) {
-      return; // Don't draw letters for opponents in online mode
+      return;
     }
 
     ctx.save();
@@ -2279,12 +2183,10 @@ class Runner extends Entity {
       ctx.fillText(`COMBO x${this.combo}`, pos.x, keyY - 55);
     }
 
-    // Speed bonus feedback
     if(this.speedBonusAlpha > 0){
       ctx.globalAlpha=this.speedBonusAlpha;
       ctx.font="bold 20px 'Orbitron'";
 
-      // Color based on speed level
       if(this.speedBonusText === 'BLAZING!'){
         ctx.fillStyle='#ff3366';
         ctx.shadowColor='#ff3366';
@@ -2308,16 +2210,12 @@ class Runner extends Entity {
     const barWidth = 220;
     const barHeight = 14;
 
-    // On mobile, place progress bar at top of screen
-    // On desktop, place it below the runner
     let x, y;
 
     if (window.mobileControlsActive) {
-      // Fixed position at top center of screen on mobile
       x = this.world.W / 2 - barWidth / 2;
-      y = 30; // Top of screen
+      y = 30;
     } else {
-      // Follow runner on desktop
       x = this.body.position.x - barWidth / 2;
       y = this.body.position.y + 60;
     }
@@ -2340,29 +2238,30 @@ class Runner extends Entity {
     ctx.shadowBlur=10;
     ctx.textAlign="center";
 
-    // Center text in mobile, follow runner on desktop
     const textX = window.mobileControlsActive ? this.world.W / 2 : this.body.position.x;
     ctx.fillText(`${Math.floor(this.progressPercent)}%`, textX, y + barHeight - 1);
     ctx.restore();
   }
 
+  // OPTIMIZED: Reduced shadow blur from 30 to 10
   draw(){
     const ctx=this.world.ctx;
     const pos=this.body.position;
 
-    // Particles
+    // Particles (no shadow)
+    ctx.save();
     this.particles.forEach(p => p.draw(ctx));
+    ctx.restore();
 
-    // Main character with glow
+    // Main character with REDUCED glow
     ctx.save();
     ctx.shadowColor=this.color;
-    ctx.shadowBlur=30;
+    ctx.shadowBlur=10; // REDUCED from 30 for massive performance gain
 
     const phase = (this.animTime) % 1;
     this.drawDetailedRunner(pos.x, pos.y, phase);
     ctx.restore();
 
-    // HUD elements
     if(this.scene.STATE==="running"){
       this.drawHUD(ctx);
       this.drawProgressBar(ctx);
@@ -2375,21 +2274,18 @@ class Runner extends Entity {
 // ============================================
 const PolyRaceScene = new Scene("PolyRace");
 
-// Word pool for word mode
 PolyRaceScene.WORD_POOL = [
   'speed', 'race', 'fast', 'type', 'win', 'quick', 'rush', 'zoom', 'dash', 'run',
   'jump', 'move', 'leap', 'fly', 'bolt', 'sprint', 'chase', 'pace', 'swift', 'rapid',
   'code', 'game', 'play', 'skill', 'power', 'boost', 'track', 'score', 'goal', 'star'
 ];
 
-// Double letter combinations
 PolyRaceScene.DOUBLE_LETTERS = [
   'ab', 'cd', 'ef', 'gh', 'ij', 'kl', 'mn', 'op', 'qr', 'st',
   'uv', 'wx', 'yz', 'ac', 'bd', 'ce', 'df', 'eg', 'fh', 'gi',
   'hj', 'ik', 'jl', 'km', 'ln', 'mo', 'np', 'oq', 'pr', 'qs'
 ];
 
-// Story mode sentences
 PolyRaceScene.STORY_POOL = [
   'The quick brown fox jumps over the lazy dog.',
   'Practice makes perfect in every skill you learn.',
@@ -2418,7 +2314,6 @@ PolyRaceScene.init=function(){
   this.raceStartTime=0;
   this.raceTime=0;
 
-  // Read URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const urlMode = urlParams.get('mode');
   const urlRaceType = urlParams.get('race');
@@ -2428,7 +2323,6 @@ PolyRaceScene.init=function(){
 
   this.selectedMode = urlMode || "practice";
 
-  // For online mode, check sessionStorage for selected mode from waiting room
   if (urlMode === "online") {
     const selectedMode = sessionStorage.getItem('selectedGameMode') || "letters";
     this.gameMode = selectedMode;
@@ -2439,7 +2333,6 @@ PolyRaceScene.init=function(){
 
   this.playerCount = parseInt(urlPlayers) || 2;
 
-  // Set race distance
   if(urlRaceType === "marathon") {
     this.raceDistancePixels = 2400;
   } else {
@@ -2451,15 +2344,12 @@ PolyRaceScene.init=function(){
   this.targetCameraX=0;
   this.gridOffset=0;
 
-  // Initialize players
-  this.initPlayers();
+  // Frame counter for throttled updates
+  this._keyIndicatorFrame = 0;
 
-  // Update UI
+  this.initPlayers();
   this.updateUIState();
 
-  // Do NOT auto-start - wait for user interaction
-  // PC: Press SPACE to start
-  // Mobile: Tap screen to start
   console.log('[GAME] Ready to start. Press SPACE or TAP to begin.');
 };
 
@@ -2475,44 +2365,34 @@ PolyRaceScene.initPlayers=function(){
     ["z","x","c","v","b","n"]
   ];
 
-  // Calculate Y positions based on player count
   const getYPosition = (index, totalPlayers) => {
     if (totalPlayers === 1) {
-      return this.world.H * 0.65; // Center for solo
+      return this.world.H * 0.65;
     } else if (totalPlayers === 2) {
       return index === 0 ? this.world.H * 0.58 : this.world.H * 0.72;
     } else {
-      // For 3-4 players, space them evenly
       const spacing = 0.15;
       const startY = 0.45;
       return this.world.H * (startY + (index * spacing));
     }
   };
 
-  // Create players based on playerCount and typing mode
   for(let i = 0; i < this.playerCount; i++) {
     const color = playerColors[i];
     const yPos = getYPosition(i, this.playerCount);
     let keySet;
 
-    // Determine key set based on typing mode
     if(this.gameMode === "letters") {
-      // Single letter mode - use individual keys
       keySet = playerKeySets[i];
     } else if(this.gameMode === "double") {
-      // Double letter mode - use two-letter combinations
       keySet = this.DOUBLE_LETTERS;
     } else if(this.gameMode === "words") {
-      // Words mode - use word pool
       keySet = this.WORD_POOL;
     } else if(this.gameMode === "story") {
-      // Story mode - use sentences
       keySet = this.STORY_POOL;
     } else if(this.gameMode === "custom") {
-      // Custom mode - for now use words (could be expanded)
       keySet = this.WORD_POOL;
     } else {
-      // Default to letters
       keySet = playerKeySets[i];
     }
 
@@ -2527,7 +2407,6 @@ PolyRaceScene.updateUIState=function(){
   const keyIndicator = document.getElementById('key-indicator');
   const winScreen = document.getElementById('win-screen');
 
-  // Never show title card in online mode - waiting room handles that
   if(this.STATE === "menu"){
     if(this.selectedMode !== "online") {
       titleCard.style.display = 'block';
@@ -2548,10 +2427,14 @@ PolyRaceScene.updateUIState=function(){
   }
 };
 
+// OPTIMIZED: Throttle key indicator updates to every 3 frames
 PolyRaceScene.updateKeyIndicator=function(){
+  if (!this._keyIndicatorFrame) this._keyIndicatorFrame = 0;
+  this._keyIndicatorFrame++;
+  if (this._keyIndicatorFrame % 3 !== 0) return; // Only update every 3 frames
+  
   const indicator = document.getElementById('key-indicator');
   if(this.STATE === "running") {
-    // In online mode, only show local player's key (player 1)
     const playersToShow = this.selectedMode === "online" ? [this.players[0]] : this.players;
 
     indicator.innerHTML = playersToShow.map((p, i) => {
@@ -2619,7 +2502,6 @@ PolyRaceScene.showCountdownText=function(text){
   display.style.display = 'block';
   display.classList.remove('active');
 
-  // Force reflow to restart animation
   void display.offsetWidth;
 
   display.classList.add('active');
@@ -2658,16 +2540,15 @@ PolyRaceScene.updatePlayers=function(){
   this.players.forEach(p=>p.update());
 };
 
+// OPTIMIZED: Reduced fog layers and grid complexity
 PolyRaceScene.renderBackground=function(){
   const ctx=this.ctx, W=this.world.W, H=this.world.H;
 
-  // Atmospheric gradient (no need to redraw, already set in CSS)
-
-  // Fog layers (parallax effect)
+  // OPTIMIZED: Reduced from 3 to 2 fog layers
   this.atmosphereOffset += 0.002;
-  for(let i = 0; i < 3; i++) {
+  for(let i = 0; i < 2; i++) {
     ctx.save();
-    ctx.globalAlpha = 0.15 - i * 0.03;
+    ctx.globalAlpha = 0.1 - i * 0.03; // Reduced opacity
     const parallaxOffset = -this.cameraX * (0.2 + i * 0.1);
     const offset = Math.sin(this.atmosphereOffset + i * 0.5) * 50;
     const grad = ctx.createRadialGradient(W/2 + offset + parallaxOffset, H * 0.3, 50, W/2 + offset + parallaxOffset, H * 0.3, 400);
@@ -2678,22 +2559,20 @@ PolyRaceScene.renderBackground=function(){
     ctx.restore();
   }
 
-  // Apply camera transformation
   ctx.save();
   ctx.translate(-this.cameraX, 0);
 
-  // Scrolling grid floor with perspective
   ctx.save();
   ctx.strokeStyle="rgba(0,255,255,0.2)";
   ctx.lineWidth=1.5;
 
   const horizonY = H * 0.4;
   const groundY = H * 0.85;
-  const cell = 60;
+  const cell = 80; // INCREASED from 60 for fewer lines
 
-  // Horizontal lines
-  for(let i = 0; i < 20; i++){
-    const t = i / 20;
+  // OPTIMIZED: Reduced from 20 to 12 horizontal lines
+  for(let i = 0; i < 12; i++){
+    const t = i / 12;
     const y = horizonY + (groundY - horizonY) * (t * t);
     const alpha = 0.1 + t * 0.35;
     ctx.globalAlpha = alpha;
@@ -2705,9 +2584,9 @@ PolyRaceScene.renderBackground=function(){
     ctx.stroke();
   }
 
-  // Vertical lines with scrolling
+  // OPTIMIZED: Reduced vertical lines from -5 to 30 -> -3 to 20
   const gridOffset = Math.floor(this.cameraX / cell) * cell;
-  for(let i = -5; i < 30; i++){
+  for(let i = -3; i < 20; i++){
     ctx.globalAlpha = 0.25;
     ctx.beginPath();
     const baseX = gridOffset + i * cell;
@@ -2717,13 +2596,13 @@ PolyRaceScene.renderBackground=function(){
   }
   ctx.restore();
 
-  // Speed lines
+  // OPTIMIZED: Reduced from 8 to 4 speed lines
   if(this.STATE === "running"){
     ctx.save();
     ctx.strokeStyle = "rgba(0,255,255,0.15)";
     ctx.lineWidth = 2;
-    for(let i = 0; i < 8; i++){
-      const y = H * 0.3 + i * 60;
+    for(let i = 0; i < 4; i++){
+      const y = H * 0.3 + i * 120; // Increased spacing
       const speed = (Date.now() * 0.5 + i * 100) % 1000;
       const startX = this.cameraX + W - speed;
       const endX = startX - 100;
@@ -2736,27 +2615,23 @@ PolyRaceScene.renderBackground=function(){
     ctx.restore();
   }
 
-  // Checkered Finish Line with Perspective (3D depth) - More Faded
+  // Finish line (more faded)
   const finishX = this.players[0].startX + this.raceDistancePixels;
 
   ctx.save();
 
-  // Create perspective finish line banner
-  const topWidth = 40;      // Narrow at horizon (top)
-  const bottomWidth = 120;  // Wide at ground (bottom)
-  const rows = 12;          // Number of checkered rows
-  const cols = 3;           // Number of checkered columns
+  const topWidth = 40;
+  const bottomWidth = 120;
+  const rows = 12;
+  const cols = 3;
 
-  // Draw checkered pattern with perspective - More faded
   for(let row = 0; row < rows; row++) {
     const t = row / rows;
     const nextT = (row + 1) / rows;
 
-    // Y positions with perspective curve
     const y1 = horizonY + (groundY - horizonY) * (t * t);
     const y2 = horizonY + (groundY - horizonY) * (nextT * nextT);
 
-    // Width increases as we go down (perspective)
     const width1 = topWidth + (bottomWidth - topWidth) * t;
     const width2 = topWidth + (bottomWidth - topWidth) * nextT;
 
@@ -2764,17 +2639,14 @@ PolyRaceScene.renderBackground=function(){
     const colWidth2 = width2 / cols;
 
     for(let col = 0; col < cols; col++) {
-      // Alternating pattern
       const isWhite = (row + col) % 2 === 0;
 
-      // Calculate trapezoid points for this cell
       const x1_left = finishX - width1/2 + col * colWidth1;
       const x1_right = finishX - width1/2 + (col + 1) * colWidth1;
       const x2_left = finishX - width2/2 + col * colWidth2;
       const x2_right = finishX - width2/2 + (col + 1) * colWidth2;
 
-      // Draw trapezoid - Much more faded (reduced opacity)
-      ctx.globalAlpha = 0.15 + t * 0.25; // Reduced from 0.4 + t * 0.4
+      ctx.globalAlpha = 0.15 + t * 0.25;
       ctx.fillStyle = isWhite ? '#ffffff' : '#000000';
       ctx.beginPath();
       ctx.moveTo(x1_left, y1);
@@ -2786,36 +2658,31 @@ PolyRaceScene.renderBackground=function(){
     }
   }
 
-  // Glowing edges with perspective - More faded
-  ctx.globalAlpha = 0.3; // Reduced from 0.6
+  ctx.globalAlpha = 0.3;
   ctx.strokeStyle = '#00ffff';
-  ctx.lineWidth = 2; // Reduced from 3
+  ctx.lineWidth = 2;
   ctx.shadowColor = '#00ffff';
-  ctx.shadowBlur = 15; // Reduced from 25
+  ctx.shadowBlur = 15;
 
-  // Left edge
   ctx.beginPath();
   ctx.moveTo(finishX - topWidth/2, horizonY);
   ctx.lineTo(finishX - bottomWidth/2, groundY);
   ctx.stroke();
 
-  // Right edge
   ctx.beginPath();
   ctx.moveTo(finishX + topWidth/2, horizonY);
   ctx.lineTo(finishX + bottomWidth/2, groundY);
   ctx.stroke();
 
-  // Top edge
-  ctx.globalAlpha = 0.15; // Reduced from 0.3
-  ctx.lineWidth = 1.5; // Reduced from 2
+  ctx.globalAlpha = 0.15;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(finishX - topWidth/2, horizonY);
   ctx.lineTo(finishX + topWidth/2, horizonY);
   ctx.stroke();
 
-  // Bottom edge
-  ctx.globalAlpha = 0.35; // Reduced from 0.6
-  ctx.lineWidth = 3; // Reduced from 4
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(finishX - bottomWidth/2, groundY);
   ctx.lineTo(finishX + bottomWidth/2, groundY);
@@ -2823,7 +2690,6 @@ PolyRaceScene.renderBackground=function(){
 
   ctx.restore();
 
-  // Restore camera transformation
   ctx.restore();
 };
 
@@ -2861,13 +2727,11 @@ PolyRaceScene.render=function(){
   this.world.clear();
   this.renderBackground();
 
-  // Apply camera transformation for players
   const ctx = this.ctx;
   ctx.save();
   ctx.translate(-this.cameraX, 0);
   this.players.forEach(p=>p.draw());
 
-  // Draw usernames in online mode
   if (this.selectedMode === "online" && this.STATE === "running") {
     this.players.forEach(p => this.drawUsername(p));
   }
@@ -2887,16 +2751,13 @@ PolyRaceScene.drawUsername=function(player){
 
   ctx.save();
 
-  // Position above player's head (150px higher than letters)
   const usernameY = pos.y - 180;
 
-  // Background for better readability
   ctx.font = "bold 16px 'Orbitron'";
   ctx.textAlign = "center";
   const textWidth = ctx.measureText(player.username).width;
   const padding = 8;
 
-  // Draw background
   ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
   ctx.fillRect(
     pos.x - textWidth/2 - padding,
@@ -2905,7 +2766,6 @@ PolyRaceScene.drawUsername=function(player){
     22
   );
 
-  // Draw border
   ctx.strokeStyle = player.color;
   ctx.lineWidth = 2;
   ctx.strokeRect(
@@ -2915,7 +2775,6 @@ PolyRaceScene.drawUsername=function(player){
     22
   );
 
-  // Draw username text
   ctx.fillStyle = player.color;
   ctx.shadowColor = player.color;
   ctx.shadowBlur = 10;
@@ -2925,7 +2784,7 @@ PolyRaceScene.drawUsername=function(player){
 };
 
 // ============================================
-// Game World
+// Game World with Mobile FPS Limiting
 // ============================================
 class GameWorld {
   constructor(){
@@ -2935,7 +2794,6 @@ class GameWorld {
     this.resize();
     window.addEventListener('resize',()=>this.resize());
 
-    // Listen to Visual Viewport for mobile keyboard changes
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => this.resize());
     }
@@ -2946,6 +2804,12 @@ class GameWorld {
     this.FPS={now:0,delta:0,last:Util.timeStamp(),step:1/60};
     this.scenes={}; this.current_scene=null;
 
+    // OPTIMIZED: Mobile FPS limiter
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    this.targetFPS = this.isMobile ? 30 : 60;
+    this.frameTime = 1000 / this.targetFPS;
+    this.lastFrameTime = 0;
+
     try {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     } catch(e) {
@@ -2955,7 +2819,6 @@ class GameWorld {
   resize(){
     this.W=window.innerWidth;
 
-    // Use Visual Viewport API to prevent distortion when mobile keyboard appears
     if (window.visualViewport) {
       this.H = window.visualViewport.height;
     } else {
@@ -2978,8 +2841,18 @@ class GameWorld {
     }
     this.loop();
   }
+  // OPTIMIZED: FPS limiter for mobile
   loop(){
-    this.FPS.now=Util.timeStamp();
+    const now = Util.timeStamp();
+    
+    // FPS limiter for mobile
+    if (this.isMobile && now - this.lastFrameTime < this.frameTime) {
+      requestAnimationFrame(() => this.loop());
+      return;
+    }
+    this.lastFrameTime = now;
+    
+    this.FPS.now=now;
     this.FPS.delta+=Math.min(1,(this.FPS.now-this.FPS.last)/1000);
     while(this.FPS.delta>this.FPS.step){
       this.FPS.delta-=this.FPS.step;
@@ -3008,26 +2881,17 @@ class GameWorld {
   }
 }
 
-  // ============================================
-  // Start Game
-  // ============================================
-  const game = new GameWorld();
-  game.addScene(PolyRaceScene);
-  game.startScene("PolyRace");
+const game = new GameWorld();
+game.addScene(PolyRaceScene);
+game.startScene("PolyRace");
   </script>
 
-  <!-- ✅ Socket.IO Client Library -->
+  <!-- Socket.IO Client Library -->
   <script src="/socket.io/socket.io.js"></script>
 
-  <!-- ✅ IMPROVED Multiplayer Sync -->
+  <!-- OPTIMIZED Multiplayer Sync -->
   <script>
-// ================================
-// POLY RACER - CLIENT MULTIPLAYER
-// Clean Rewrite for Proper Sync
-// ================================
-
 console.log('[GAME] Multiplayer script starting...');
-console.log('[GAME] Current URL:', window.location.href);
 
 const urlParams = new URLSearchParams(window.location.search);
 const mode = urlParams.get("mode");
@@ -3038,9 +2902,7 @@ console.log('[GAME] Room from URL:', roomFromURL);
 
 if (mode === "online") {
   console.log('[MP] ===== MULTIPLAYER MODE DETECTED =====');
-  console.log('[MP] Initializing multiplayer client...');
 
-  // Check if Socket.IO is loaded
   if (typeof io === 'undefined') {
     console.error('[MP] ERROR: Socket.IO library not loaded!');
     alert('ERROR: Socket.IO library failed to load. Check your internet connection.');
@@ -3048,7 +2910,6 @@ if (mode === "online") {
     console.log('[MP] Socket.IO library loaded successfully');
   }
 
-  // Connection setup
   const serverUrl = window.location.origin;
   console.log('[MP] Connecting to:', serverUrl);
 
@@ -3065,43 +2926,33 @@ if (mode === "online") {
   const playerName = localStorage.getItem("username") || `Player${Math.floor(Math.random() * 10000)}`;
 
   let mySocketId = null;
-  let myPlayerIndex = null; // Will be 0 or 1
+  let myPlayerIndex = null;
   let opponentPlayerIndex = null;
   let roomData = null;
 
-  // Save room code to session for reconnection
   if (roomCode) {
     sessionStorage.setItem('currentRoomCode', roomCode);
   }
 
   console.log(`[MP] Joining room ${roomCode} as ${playerName}`);
 
-  // ===== CONNECTION =====
   socket.on("connect", () => {
     console.log("[MP] Connected:", socket.id);
-    console.log("[MP] Recovered:", socket.recovered); // Check if connection was recovered
     mySocketId = socket.id;
 
-    // If connection was recovered, Socket.IO already rejoined rooms
     if (socket.recovered) {
       console.log("[MP] Connection recovered - already in room");
       return;
     }
 
-    // Try to get room code from URL or session
     if (!roomCode) {
       roomCode = sessionStorage.getItem('currentRoomCode');
       console.log("[MP] Restored room code from session:", roomCode);
     }
 
-    console.log("[MP] Room code:", roomCode);
-    console.log("[MP] Player name:", playerName);
-
-    // Register player first
     console.log("[MP] Emitting player:register...");
     socket.emit("player:register", { name: playerName });
 
-    // Join the room
     if (roomCode) {
       console.log("[MP] Emitting room:join with code:", roomCode);
       socket.emit("room:join", { roomCode });
@@ -3110,11 +2961,9 @@ if (mode === "online") {
     }
   });
 
-  // ===== DISCONNECT HANDLING =====
   socket.on("disconnect", (reason) => {
     console.log("[MP] Disconnected:", reason);
 
-    // Show reconnecting message
     const waitingRoom = document.getElementById('online-waiting-room');
     if (waitingRoom && waitingRoom.classList.contains('active')) {
       const readyHint = document.getElementById('ready-hint');
@@ -3125,11 +2974,9 @@ if (mode === "online") {
     }
   });
 
-  // ===== RECONNECT HANDLING =====
   socket.on("reconnect", (attemptNumber) => {
     console.log("[MP] Reconnected after", attemptNumber, "attempts");
 
-    // Try to rejoin the room
     const savedRoomCode = sessionStorage.getItem('currentRoomCode');
     if (savedRoomCode && !socket.recovered) {
       console.log("[MP] Attempting to rejoin room:", savedRoomCode);
@@ -3137,7 +2984,6 @@ if (mode === "online") {
       socket.emit("room:join", { roomCode: savedRoomCode });
     }
 
-    // Update UI
     const readyHint = document.getElementById('ready-hint');
     if (readyHint) {
       readyHint.textContent = 'Reconnected! Waiting for opponent...';
@@ -3145,34 +2991,28 @@ if (mode === "online") {
     }
   });
 
-  // ===== ROOM JOINED =====
   socket.on("room:joined", (data) => {
     console.log("[MP] Joined room:", data);
     roomData = data.room;
-    myPlayerIndex = data.playerIndex; // Server tells us our index (0 or 1)
+    myPlayerIndex = data.playerIndex;
     opponentPlayerIndex = myPlayerIndex === 0 ? 1 : 0;
 
-    // Save room info to session
     sessionStorage.setItem('currentRoomCode', data.room.code);
     sessionStorage.setItem('myPlayerIndex', myPlayerIndex);
 
     console.log(`[MP] I am player ${myPlayerIndex}`);
 
-    // Update scene with correct player data
     const scene = game?.current_scene;
     if (scene && scene.players) {
-      // Find my data and opponent data from room
       const myData = roomData.players[myPlayerIndex];
       const opponentData = roomData.players[opponentPlayerIndex];
 
-      // Local player is ALWAYS scene.players[0]
       if (scene.players[0] && myData) {
         scene.players[0].username = myData.name;
         scene.players[0].color = myPlayerIndex === 0 ? '#00ffff' : '#ff00ff';
         console.log(`[MP] Local player: ${myData.name} (${scene.players[0].color})`);
       }
 
-      // Opponent is ALWAYS scene.players[1]
       if (scene.players[1] && opponentData) {
         scene.players[1].username = opponentData.name;
         scene.players[1].color = opponentPlayerIndex === 0 ? '#00ffff' : '#ff00ff';
@@ -3180,11 +3020,9 @@ if (mode === "online") {
       }
     }
 
-    // Show waiting room
     showWaitingRoom(roomData);
   });
 
-  // ===== WAITING ROOM UI =====
   function showWaitingRoom(room) {
     console.log('[MP] showWaitingRoom called with:', room);
 
@@ -3194,15 +3032,9 @@ if (mode === "online") {
     const readyBtn = document.getElementById('im-ready-btn');
     const readyHint = document.getElementById('ready-hint');
 
-    console.log('[MP] Waiting room element:', waitingRoom);
-
-    // Set invite link (dynamic URL for localhost and Railway)
     const inviteLink = `${window.location.origin}/game.html?mode=online&room=${roomCode}`;
     inviteLinkInput.value = inviteLink;
 
-    console.log('[MP] Invite link set to:', inviteLink);
-
-    // Copy button handler
     let copyHandlerAdded = false;
     if (!copyHandlerAdded) {
       copyBtn.addEventListener('click', async () => {
@@ -3224,24 +3056,16 @@ if (mode === "online") {
       copyHandlerAdded = true;
     }
 
-    // Game mode selector handler
     let modeHandlerAdded = false;
     if (!modeHandlerAdded) {
-      let selectedGameMode = 'letters'; // Default mode
+      let selectedGameMode = 'letters';
 
       document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          // Remove active class from all buttons
           document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-
-          // Add active class to clicked button
           btn.classList.add('active');
-
-          // Store selected mode
           selectedGameMode = btn.dataset.mode;
           console.log('[MP] Game mode selected:', selectedGameMode);
-
-          // Store in session for when game starts
           sessionStorage.setItem('selectedGameMode', selectedGameMode);
         });
       });
@@ -3249,15 +3073,11 @@ if (mode === "online") {
       modeHandlerAdded = true;
     }
 
-    // Update player status
     updatePlayerStatus(room);
 
-    // Show waiting room
     console.log('[MP] Showing waiting room...');
     waitingRoom.classList.add('active');
-    console.log('[MP] Waiting room is now active:', waitingRoom.classList.contains('active'));
 
-    // Ready button handler
     let readyHandlerAdded = false;
     if (!readyHandlerAdded) {
       readyBtn.addEventListener('click', () => {
@@ -3300,7 +3120,6 @@ if (mode === "online") {
       if (p2.ready) player2Status.classList.add('ready');
       else player2Status.classList.remove('ready');
 
-      // Enable ready button
       if (!room.players[myPlayerIndex]?.ready) {
         readyBtn.disabled = false;
         readyHint.textContent = 'Click when ready to race!';
@@ -3316,47 +3135,39 @@ if (mode === "online") {
     }
   }
 
-  // ===== ROOM UPDATED =====
   socket.on("room:updated", (data) => {
     console.log("[MP] Room updated:", data.room);
     roomData = data.room;
     updatePlayerStatus(roomData);
   });
 
-  // ===== COUNTDOWN START (WITH TIMESTAMP) =====
   socket.on("game:countdown-start", (data) => {
     console.log("[MP] Countdown starting!", data);
     roomData = data.room;
 
-    // Hide waiting room
     const waitingRoom = document.getElementById('online-waiting-room');
     waitingRoom.classList.remove('active');
 
-    // Calculate time until race starts
     const serverCountdownStart = data.countdownStartTime;
-    const serverRaceStart = data.raceStartTime;
     const now = Date.now();
-    const clientDelay = now - serverCountdownStart; // Network latency
+    const clientDelay = now - serverCountdownStart;
 
     console.log(`[MP] Countdown started ${clientDelay}ms ago (latency compensation)`);
 
-    // Start countdown animation
     const scene = game.current_scene;
     if (scene) {
       console.log("[MP] Setting scene to countdown state");
       scene.STATE = "countdown";
       scene.countIndex = 0;
-      scene.countStart = new Date(serverCountdownStart); // Use server time
+      scene.countStart = new Date(serverCountdownStart);
 
-      // Ensure players are initialized
       if (!scene.players || scene.players.length === 0) {
         console.log("[MP] Initializing players for countdown");
         scene.initPlayers();
       }
 
-      // Update UI to show countdown
       scene.updateUIState();
-      scene.startCountdown(); // Start the countdown sequence
+      scene.startCountdown();
 
       console.log("[MP] Countdown initialized, players:", scene.players.length);
     } else {
@@ -3364,7 +3175,6 @@ if (mode === "online") {
     }
   });
 
-  // ===== RACE START =====
   socket.on("game:race-start", (data) => {
     console.log("[MP] Race starting NOW!");
 
@@ -3372,9 +3182,8 @@ if (mode === "online") {
     if (scene) {
       console.log("[MP] Transitioning to running state");
       scene.STATE = "running";
-      scene.raceStartTime = data.room.startTime; // Use server start time
+      scene.raceStartTime = data.room.startTime;
 
-      // Ensure players are ready
       if (scene.players && scene.players.length > 0) {
         scene.players.forEach((p, idx) => {
           console.log(`[MP] Player ${idx}: position=${p.body.position.x}, progress=${p.progressPercent}`);
@@ -3388,43 +3197,50 @@ if (mode === "online") {
     }
   });
 
-  // ===== POSITION SYNC =====
-  const SEND_INTERVAL = 100; // 10 updates/sec (reduced for performance)
+  // OPTIMIZED: Reduced update frequency from 100ms to 150ms
+  const SEND_INTERVAL = 150;
+  let lastSendTime = 0;
 
   function sendPositionUpdate() {
+    const now = Date.now();
+    if (now - lastSendTime < SEND_INTERVAL) return; // Throttle
+    lastSendTime = now;
+
     const scene = game.current_scene;
     if (!scene || scene.STATE !== "running") return;
 
-    const me = scene.players[0]; // Local player
+    const me = scene.players[0];
     if (!me) return;
 
     socket.emit("player:update", {
-      position: me.body.position.x,
-      progress: me.progressPercent,
+      position: Math.round(me.body.position.x), // Round to reduce precision
+      progress: Math.round(me.progressPercent),
       score: me.score,
       combo: me.combo,
       animTime: me.animTime,
-      velocity: me.body.velocity.x
+      velocity: Math.round(me.body.velocity.x * 10) / 10
     });
   }
 
-  // Send updates using setInterval (reduced frequency for better local performance)
   setInterval(sendPositionUpdate, SEND_INTERVAL);
 
-  // ===== RECEIVE OPPONENT UPDATE (NO ECHO) =====
+  // OPTIMIZED: Lighter interpolation with snap threshold
   socket.on("game:update", (data) => {
     const scene = game.current_scene;
     if (!scene || scene.STATE !== "running") return;
 
-    // Data is from opponent only (server doesn't echo)
     const opponent = scene.players[1];
     if (!opponent) return;
 
-    // Lighter interpolation to reduce performance impact
     const targetX = data.position ?? opponent.body.position.x;
-    opponent.body.position.x += (targetX - opponent.body.position.x) * 0.3; // 30% interpolation (reduced from 50%)
+    const deltaX = Math.abs(targetX - opponent.body.position.x);
+    
+    if (deltaX > 1) {
+      opponent.body.position.x += (targetX - opponent.body.position.x) * 0.2; // Reduced from 0.3
+    } else {
+      opponent.body.position.x = targetX; // Snap if close
+    }
 
-    // Direct updates
     opponent.progressPercent = data.progress ?? 0;
     opponent.score = data.score ?? 0;
     opponent.combo = data.combo ?? 0;
@@ -3432,7 +3248,6 @@ if (mode === "online") {
     opponent.body.velocity.x = data.velocity ?? 0;
   });
 
-  // ===== GAME FINISHED =====
   socket.on("game:finished", (data) => {
     console.log("[MP] Game finished!", data.winner);
 
@@ -3440,11 +3255,10 @@ if (mode === "online") {
     if (scene && scene.STATE === "running") {
       scene.STATE = "win";
 
-      // Determine winner index (0 or 1 in our local scene)
       if (data.winner.socketId === mySocketId) {
-        scene.winner = 0; // I won
+        scene.winner = 0;
       } else {
-        scene.winner = 1; // Opponent won
+        scene.winner = 1;
       }
 
       scene.winnerStats = {
@@ -3456,28 +3270,22 @@ if (mode === "online") {
     }
   });
 
-  // ===== PLAYER LEFT DURING GAME =====
   socket.on("room:player-left", (data) => {
     console.log("[MP] Player left:", data.playerName);
 
     const scene = game.current_scene;
     if (!scene) return;
 
-    // If game is running, pause and show notification
     if (scene.STATE === "running") {
       console.log("[MP] Opponent disconnected during race!");
 
-      // Pause the game
       const previousState = scene.STATE;
       scene.STATE = "paused";
 
-      // Show opponent disconnected overlay
       showOpponentDisconnectedOverlay(data.playerName, () => {
-        // User chose to return to lobby
         window.location.href = window.location.origin + '/';
       });
     } else if (scene.STATE === "waiting") {
-      // In waiting room, just update the room display
       console.log("[MP] Player left waiting room");
       const waitingRoom = document.getElementById('online-waiting-room');
       if (waitingRoom && waitingRoom.style.opacity === '1') {
@@ -3486,9 +3294,7 @@ if (mode === "online") {
     }
   });
 
-  // Helper function to show opponent disconnected overlay
   function showOpponentDisconnectedOverlay(opponentName, onReturnToLobby) {
-    // Remove existing overlay if any
     const existingOverlay = document.getElementById('opponent-disconnected-overlay');
     if (existingOverlay) existingOverlay.remove();
 
@@ -3559,13 +3365,11 @@ if (mode === "online") {
 
     document.body.appendChild(overlay);
 
-    // Return to lobby button
     document.getElementById('return-lobby-btn').addEventListener('click', () => {
       overlay.remove();
       if (onReturnToLobby) onReturnToLobby();
     });
 
-    // Wait for reconnect button
     let waitTimeout;
     document.getElementById('wait-reconnect-btn').addEventListener('click', () => {
       const timerText = document.getElementById('reconnect-timer');
@@ -3590,30 +3394,26 @@ if (mode === "online") {
         }
       }, 1000);
 
-      // If opponent rejoins, close the overlay
       const checkReconnect = setInterval(() => {
         const scene = game.current_scene;
         if (scene && scene.players.length >= 2) {
           clearInterval(countdownInterval);
           clearInterval(checkReconnect);
           overlay.remove();
-          scene.STATE = "running"; // Resume game
+          scene.STATE = "running";
           console.log("[MP] Opponent rejoined! Resuming game.");
         }
       }, 500);
     });
   }
 
-  // ===== ROOM RESET (REMATCH) =====
   socket.on("room:reset", (data) => {
     console.log("[MP] Room reset for rematch!");
     roomData = data.room;
 
-    // Hide win screen
     const winScreen = document.getElementById('win-screen');
     winScreen?.classList.remove('active');
 
-    // Reset scene
     const scene = game.current_scene;
     if (scene) {
       scene.STATE = "menu";
@@ -3621,7 +3421,6 @@ if (mode === "online") {
       scene.canRestart = false;
       scene.updateUIState();
 
-      // Reset players
       scene.players.forEach(p => {
         p.body.position.x = p.startX;
         p.score = 0;
@@ -3631,10 +3430,8 @@ if (mode === "online") {
       });
     }
 
-    // Show waiting room again
     showWaitingRoom(roomData);
 
-    // Reset ready button
     const readyBtn = document.getElementById('im-ready-btn');
     if (readyBtn) {
       readyBtn.disabled = roomData.players.length < 2;
@@ -3642,7 +3439,6 @@ if (mode === "online") {
     }
   });
 
-  // ===== ERROR HANDLING =====
   socket.on("room:error", (data) => {
     console.error("[MP] Room error:", data.message);
     alert("Room error: " + data.message);
@@ -3657,7 +3453,6 @@ if (mode === "online") {
     console.error("[MP] Connection error:", error);
   });
 
-  // ===== PLAYER FINISHED =====
   window.addEventListener('beforeunload', () => {
     const scene = game.current_scene;
     if (scene && scene.STATE === "running") {
@@ -3669,20 +3464,16 @@ if (mode === "online") {
   });
 }
   </script>
-  </script>
 
   <!-- Global online tracking (for all game modes) -->
   <script>
-    // Only create background connection if NOT in online multiplayer mode
     const urlParams2 = new URLSearchParams(window.location.search);
     const gameMode = urlParams2.get("mode");
 
     if (gameMode !== "online") {
-      // Track as online for solo/local games
       (function() {
-        const serverUrl = window.location.origin; // Dynamic URL for localhost and Railway
+        const serverUrl = window.location.origin;
 
-        // Generate or get stored anonymous ID
         let anonymousId = localStorage.getItem('anonymousId');
         if (!anonymousId) {
           anonymousId = 'Guest_' + Math.random().toString(36).substr(2, 9);
@@ -3698,7 +3489,6 @@ if (mode === "online") {
           backgroundSocket.on('connect', () => {
             console.log('[GAME] Background connection established:', backgroundSocket.id);
 
-            // Register as a visitor
             backgroundSocket.emit('player:register', {
               name: anonymousId,
               isVisitor: true
@@ -3709,7 +3499,6 @@ if (mode === "online") {
             console.log('[GAME] Background disconnected');
           });
 
-          // Cleanup on page unload
           window.addEventListener('beforeunload', () => {
             if (backgroundSocket && backgroundSocket.connected) {
               backgroundSocket.disconnect();
@@ -3723,4 +3512,4 @@ if (mode === "online") {
     }
   </script>
 </body>
-</html>
+</html>"
