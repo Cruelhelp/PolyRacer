@@ -28,7 +28,8 @@
       font-family: 'Orbitron', sans-serif;
       background: radial-gradient(ellipse at center, #0a0a0f 0%, #000000 100%);
       color: #fff;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     /* Back to Home Button */
@@ -108,11 +109,17 @@
 
     /* Mode Selection Grid */
     .mode-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 30px;
       max-width: 1200px;
       margin-bottom: 40px;
+    }
+
+    .mode-grid .mode-card {
+      flex: 1 1 300px;
+      max-width: 350px;
     }
 
     .mode-card {
@@ -471,11 +478,17 @@
 
     /* Typing Mode Selection */
     .typing-mode-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 20px;
       max-width: 1200px;
       margin-bottom: 40px;
+    }
+
+    .typing-mode-grid .typing-mode-card {
+      flex: 1 1 200px;
+      max-width: 250px;
     }
 
     .typing-mode-card {
