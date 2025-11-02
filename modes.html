@@ -1420,8 +1420,8 @@
         usernameInput.value = state.username;
       }
 
-      // PATCH: Always connect to deployed server
-      const serverUrl = 'https://polyracer-production.up.railway.app';
+      // Automatically detect server URL (works for both localhost and Railway)
+      const serverUrl = window.location.origin;
 
       try {
         if (typeof io === 'undefined') {
@@ -1527,29 +1527,22 @@
         updateRoomList(data.rooms || []);
       });
 
-      // ✅ Room created handler - REDIRECT TO GAME IMMEDIATELY
+      // Room created - redirect to game
       lobbySocket.on('room:created', (data) => {
         console.log('[LOBBY] Room created:', data);
-        state.currentRoom = data.roomCode;
+        const roomCode = data.room.code;
 
-        // Save for game
-        localStorage.setItem('roomCode', data.roomCode);
+        // Save info for game
+        localStorage.setItem('roomCode', roomCode);
         localStorage.setItem('playerId', state.playerId);
         localStorage.setItem('username', state.username);
 
-        // Auto-share in global chat
-        const inviteLink = `https://polyracer-production.up.railway.app/game.html?mode=online&room=${data.roomCode}`;
-        lobbySocket.emit('chat:send', {
-          username: state.username,
-          message: `🎮 Room created! Join here: ${inviteLink}`
-        });
-
-        // Redirect to game immediately
-        console.log('[LOBBY] Redirecting to game...');
+        // Redirect to game with room code
+        console.log('[LOBBY] Redirecting to game with room:', roomCode);
         const fadeOverlay = document.getElementById('fade-overlay');
         fadeOverlay.classList.add('active');
         setTimeout(() => {
-          window.location.href = `game.html?mode=online&room=${data.roomCode}`;
+          window.location.href = `${window.location.origin}/game.html?mode=online&room=${roomCode}`;
         }, 500);
       });
 
@@ -1567,7 +1560,7 @@ lobbySocket.on('room:joined', (data) => {
   const fadeOverlay = document.getElementById('fade-overlay');
   fadeOverlay.classList.add('active');
   setTimeout(() => {
-    window.location.href = `game.html?mode=online&room=${data.roomCode}`;
+    window.location.href = `${window.location.origin}/game.html?mode=online&room=${data.roomCode}`;
   }, 500);
 });
 
@@ -1868,8 +1861,8 @@ lobbySocket.on('game:redirect', (data) => {
     function updateRoomLobbyUI(room) {
   let lobbyUI = document.getElementById('room-ui');
 
-  // Generate shareable link using production URL
-  const inviteLink = `https://polyracer-production.up.railway.app/modes.html?join=${room.code}`;
+  // Generate shareable link using dynamic URL
+  const inviteLink = `${window.location.origin}/modes.html?join=${room.code}`;
 
   if (!lobbyUI) {
     lobbyUI = document.createElement('div');
@@ -2077,7 +2070,7 @@ function showCountdown(seconds, callback) {
   <script>
     // Always track users as online on modes page
     (function() {
-      const serverUrl = 'https://polyracer-production.up.railway.app';
+      const serverUrl = window.location.origin; // Dynamic URL for localhost and Railway
 
       // Generate or get stored anonymous ID
       let anonymousId = localStorage.getItem('anonymousId');
