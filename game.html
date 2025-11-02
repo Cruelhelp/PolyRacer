@@ -702,13 +702,16 @@
 
     /* Online Waiting Room */
     #online-waiting-room {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 600px;
-      text-align: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 5000;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
@@ -800,6 +803,76 @@
 
     .copy-link-btn:active {
       transform: translateY(0);
+    }
+
+    /* Game Mode Selector */
+    .game-mode-section {
+      margin: 30px 0;
+    }
+
+    .mode-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .mode-btn {
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 15px 10px;
+      color: rgba(255, 255, 255, 0.7);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .mode-btn:hover {
+      border-color: var(--cyan);
+      background: rgba(0, 255, 255, 0.1);
+      color: var(--cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+
+    .mode-btn.active {
+      border-color: var(--cyan);
+      background: rgba(0, 255, 255, 0.15);
+      color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    }
+
+    .mode-icon {
+      font-size: 1.5rem;
+      font-weight: 900;
+    }
+
+    .mode-name {
+      font-size: 0.7rem;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .mode-selector {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .mode-btn {
+        padding: 12px 8px;
+      }
+
+      .mode-name {
+        font-size: 0.65rem;
+      }
     }
 
     .players-ready-status {
@@ -1001,7 +1074,7 @@
   <canvas id="game-canvas"></canvas>
 
   <div id="game-hud">
-    <!-- Title Card (shown in menu state) -->
+    <!-- Title Card (shown in menu state - NOT for online mode) -->
     <div id="title-card" style="display: none;">
       <h1 class="game-title">POLY RACE</h1>
       <p class="game-subtitle">Type. Race. Win.</p>
@@ -1009,7 +1082,7 @@
     </div>
 
     <!-- Online Waiting Room (shown in online mode before race starts) -->
-    <div id="online-waiting-room" style="display: none;">
+    <div id="online-waiting-room">
       <div class="waiting-room-content">
         <h1 class="waiting-title">
           <span style="color: #00ffff;">MULTIPLAYER</span> LOBBY
@@ -1026,6 +1099,29 @@
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
               COPY
+            </button>
+          </div>
+        </div>
+
+        <!-- Game Mode Selector -->
+        <div class="game-mode-section">
+          <p class="invite-label">GAME MODE</p>
+          <div class="mode-selector">
+            <button class="mode-btn active" data-mode="letters">
+              <span class="mode-icon">A</span>
+              <span class="mode-name">SINGLE LETTER</span>
+            </button>
+            <button class="mode-btn" data-mode="double">
+              <span class="mode-icon">AB</span>
+              <span class="mode-name">DOUBLE LETTER</span>
+            </button>
+            <button class="mode-btn" data-mode="words">
+              <span class="mode-icon">📝</span>
+              <span class="mode-name">WORDS</span>
+            </button>
+            <button class="mode-btn" data-mode="story">
+              <span class="mode-icon">📖</span>
+              <span class="mode-name">STORY</span>
             </button>
           </div>
         </div>
@@ -2202,7 +2298,16 @@ PolyRaceScene.init=function(){
   const urlPlayers = urlParams.get('players');
 
   this.selectedMode = urlMode || "practice";
-  this.gameMode = urlTypingMode || "letters";
+
+  // For online mode, check sessionStorage for selected mode from waiting room
+  if (urlMode === "online") {
+    const selectedMode = sessionStorage.getItem('selectedGameMode') || "letters";
+    this.gameMode = selectedMode;
+    console.log('[SCENE] Online mode: Using selected game mode:', selectedMode);
+  } else {
+    this.gameMode = urlTypingMode || "letters";
+  }
+
   this.playerCount = parseInt(urlPlayers) || 2;
 
   // Set race distance
@@ -2298,8 +2403,11 @@ PolyRaceScene.updateUIState=function(){
   const keyIndicator = document.getElementById('key-indicator');
   const winScreen = document.getElementById('win-screen');
 
+  // Never show title card in online mode - waiting room handles that
   if(this.STATE === "menu"){
-    titleCard.style.display = 'block';
+    if(this.selectedMode !== "online") {
+      titleCard.style.display = 'block';
+    }
     statsHud.style.display = 'none';
     keyIndicator.style.display = 'none';
     winScreen.classList.remove('active');
@@ -2782,23 +2890,42 @@ class GameWorld {
 // Clean Rewrite for Proper Sync
 // ================================
 
+console.log('[GAME] Multiplayer script starting...');
+console.log('[GAME] Current URL:', window.location.href);
+
 const urlParams = new URLSearchParams(window.location.search);
 const mode = urlParams.get("mode");
+const roomFromURL = urlParams.get("room");
+
+console.log('[GAME] Mode:', mode);
+console.log('[GAME] Room from URL:', roomFromURL);
 
 if (mode === "online") {
+  console.log('[MP] ===== MULTIPLAYER MODE DETECTED =====');
   console.log('[MP] Initializing multiplayer client...');
+
+  // Check if Socket.IO is loaded
+  if (typeof io === 'undefined') {
+    console.error('[MP] ERROR: Socket.IO library not loaded!');
+    alert('ERROR: Socket.IO library failed to load. Check your internet connection.');
+  } else {
+    console.log('[MP] Socket.IO library loaded successfully');
+  }
 
   // Connection setup
   const serverUrl = window.location.origin;
+  console.log('[MP] Connecting to:', serverUrl);
+
   const socket = io(serverUrl, {
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionAttempts: 5
   });
 
+  console.log('[MP] Socket created:', socket);
   window.multiplayerSocket = socket;
 
-  const roomCode = urlParams.get("room");
+  let roomCode = urlParams.get("room");
   const playerName = localStorage.getItem("username") || `Player${Math.floor(Math.random() * 10000)}`;
 
   let mySocketId = null;
@@ -2806,16 +2933,80 @@ if (mode === "online") {
   let opponentPlayerIndex = null;
   let roomData = null;
 
-  console.log(`[MP] Connecting to room ${roomCode} as ${playerName}`);
+  // Save room code to session for reconnection
+  if (roomCode) {
+    sessionStorage.setItem('currentRoomCode', roomCode);
+  }
+
+  console.log(`[MP] Joining room ${roomCode} as ${playerName}`);
 
   // ===== CONNECTION =====
   socket.on("connect", () => {
     console.log("[MP] Connected:", socket.id);
+    console.log("[MP] Recovered:", socket.recovered); // Check if connection was recovered
     mySocketId = socket.id;
 
-    // Register and join room
+    // If connection was recovered, Socket.IO already rejoined rooms
+    if (socket.recovered) {
+      console.log("[MP] Connection recovered - already in room");
+      return;
+    }
+
+    // Try to get room code from URL or session
+    if (!roomCode) {
+      roomCode = sessionStorage.getItem('currentRoomCode');
+      console.log("[MP] Restored room code from session:", roomCode);
+    }
+
+    console.log("[MP] Room code:", roomCode);
+    console.log("[MP] Player name:", playerName);
+
+    // Register player first
+    console.log("[MP] Emitting player:register...");
     socket.emit("player:register", { name: playerName });
-    socket.emit("room:join", { roomCode });
+
+    // Join the room
+    if (roomCode) {
+      console.log("[MP] Emitting room:join with code:", roomCode);
+      socket.emit("room:join", { roomCode });
+    } else {
+      console.error("[MP] No room code provided!");
+    }
+  });
+
+  // ===== DISCONNECT HANDLING =====
+  socket.on("disconnect", (reason) => {
+    console.log("[MP] Disconnected:", reason);
+
+    // Show reconnecting message
+    const waitingRoom = document.getElementById('online-waiting-room');
+    if (waitingRoom && waitingRoom.classList.contains('active')) {
+      const readyHint = document.getElementById('ready-hint');
+      if (readyHint) {
+        readyHint.textContent = 'Connection lost... Reconnecting...';
+        readyHint.style.color = '#ff00ff';
+      }
+    }
+  });
+
+  // ===== RECONNECT HANDLING =====
+  socket.on("reconnect", (attemptNumber) => {
+    console.log("[MP] Reconnected after", attemptNumber, "attempts");
+
+    // Try to rejoin the room
+    const savedRoomCode = sessionStorage.getItem('currentRoomCode');
+    if (savedRoomCode && !socket.recovered) {
+      console.log("[MP] Attempting to rejoin room:", savedRoomCode);
+      socket.emit("player:register", { name: playerName });
+      socket.emit("room:join", { roomCode: savedRoomCode });
+    }
+
+    // Update UI
+    const readyHint = document.getElementById('ready-hint');
+    if (readyHint) {
+      readyHint.textContent = 'Reconnected! Waiting for opponent...';
+      readyHint.style.color = '#00ff88';
+    }
   });
 
   // ===== ROOM JOINED =====
@@ -2824,6 +3015,10 @@ if (mode === "online") {
     roomData = data.room;
     myPlayerIndex = data.playerIndex; // Server tells us our index (0 or 1)
     opponentPlayerIndex = myPlayerIndex === 0 ? 1 : 0;
+
+    // Save room info to session
+    sessionStorage.setItem('currentRoomCode', data.room.code);
+    sessionStorage.setItem('myPlayerIndex', myPlayerIndex);
 
     console.log(`[MP] I am player ${myPlayerIndex}`);
 
@@ -2855,15 +3050,21 @@ if (mode === "online") {
 
   // ===== WAITING ROOM UI =====
   function showWaitingRoom(room) {
+    console.log('[MP] showWaitingRoom called with:', room);
+
     const waitingRoom = document.getElementById('online-waiting-room');
     const inviteLinkInput = document.getElementById('game-invite-link');
     const copyBtn = document.getElementById('copy-game-link-btn');
     const readyBtn = document.getElementById('im-ready-btn');
     const readyHint = document.getElementById('ready-hint');
 
-    // Set invite link
-    const inviteLink = `https://polyracer-production.up.railway.app/game.html?mode=online&room=${roomCode}`;
+    console.log('[MP] Waiting room element:', waitingRoom);
+
+    // Set invite link (dynamic URL for localhost and Railway)
+    const inviteLink = `${window.location.origin}/game.html?mode=online&room=${roomCode}`;
     inviteLinkInput.value = inviteLink;
+
+    console.log('[MP] Invite link set to:', inviteLink);
 
     // Copy button handler
     let copyHandlerAdded = false;
@@ -2887,11 +3088,38 @@ if (mode === "online") {
       copyHandlerAdded = true;
     }
 
+    // Game mode selector handler
+    let modeHandlerAdded = false;
+    if (!modeHandlerAdded) {
+      let selectedGameMode = 'letters'; // Default mode
+
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Remove active class from all buttons
+          document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+
+          // Add active class to clicked button
+          btn.classList.add('active');
+
+          // Store selected mode
+          selectedGameMode = btn.dataset.mode;
+          console.log('[MP] Game mode selected:', selectedGameMode);
+
+          // Store in session for when game starts
+          sessionStorage.setItem('selectedGameMode', selectedGameMode);
+        });
+      });
+
+      modeHandlerAdded = true;
+    }
+
     // Update player status
     updatePlayerStatus(room);
 
     // Show waiting room
+    console.log('[MP] Showing waiting room...');
     waitingRoom.classList.add('active');
+    console.log('[MP] Waiting room is now active:', waitingRoom.classList.contains('active'));
 
     // Ready button handler
     let readyHandlerAdded = false;
@@ -3003,14 +3231,9 @@ if (mode === "online") {
   });
 
   // ===== POSITION SYNC =====
-  let lastSendTime = 0;
-  const SEND_INTERVAL = 50; // 20 updates/sec
+  const SEND_INTERVAL = 100; // 10 updates/sec (reduced for performance)
 
   function sendPositionUpdate() {
-    const now = Date.now();
-    if (now - lastSendTime < SEND_INTERVAL) return;
-    lastSendTime = now;
-
     const scene = game.current_scene;
     if (!scene || scene.STATE !== "running") return;
 
@@ -3027,12 +3250,8 @@ if (mode === "online") {
     });
   }
 
-  // Send updates in loop
-  function updateLoop() {
-    sendPositionUpdate();
-    requestAnimationFrame(updateLoop);
-  }
-  updateLoop();
+  // Send updates using setInterval (reduced frequency for better local performance)
+  setInterval(sendPositionUpdate, SEND_INTERVAL);
 
   // ===== RECEIVE OPPONENT UPDATE (NO ECHO) =====
   socket.on("game:update", (data) => {
@@ -3043,9 +3262,9 @@ if (mode === "online") {
     const opponent = scene.players[1];
     if (!opponent) return;
 
-    // Smooth interpolation
+    // Lighter interpolation to reduce performance impact
     const targetX = data.position ?? opponent.body.position.x;
-    opponent.body.position.x += (targetX - opponent.body.position.x) * 0.5; // 50% interpolation
+    opponent.body.position.x += (targetX - opponent.body.position.x) * 0.3; // 30% interpolation (reduced from 50%)
 
     // Direct updates
     opponent.progressPercent = data.progress ?? 0;
@@ -3078,6 +3297,154 @@ if (mode === "online") {
       scene.showWinScreen();
     }
   });
+
+  // ===== PLAYER LEFT DURING GAME =====
+  socket.on("room:player-left", (data) => {
+    console.log("[MP] Player left:", data.playerName);
+
+    const scene = game.current_scene;
+    if (!scene) return;
+
+    // If game is running, pause and show notification
+    if (scene.STATE === "running") {
+      console.log("[MP] Opponent disconnected during race!");
+
+      // Pause the game
+      const previousState = scene.STATE;
+      scene.STATE = "paused";
+
+      // Show opponent disconnected overlay
+      showOpponentDisconnectedOverlay(data.playerName, () => {
+        // User chose to return to lobby
+        window.location.href = window.location.origin + '/';
+      });
+    } else if (scene.STATE === "waiting") {
+      // In waiting room, just update the room display
+      console.log("[MP] Player left waiting room");
+      const waitingRoom = document.getElementById('online-waiting-room');
+      if (waitingRoom && waitingRoom.style.opacity === '1') {
+        updateWaitingRoomPlayers(data.room);
+      }
+    }
+  });
+
+  // Helper function to show opponent disconnected overlay
+  function showOpponentDisconnectedOverlay(opponentName, onReturnToLobby) {
+    // Remove existing overlay if any
+    const existingOverlay = document.getElementById('opponent-disconnected-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'opponent-disconnected-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      font-family: 'Orbitron', sans-serif;
+    `;
+
+    overlay.innerHTML = `
+      <div style="text-align: center; max-width: 600px; padding: 40px;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">⚠️</div>
+        <h2 style="font-size: 2rem; color: #FFD700; letter-spacing: 4px; margin-bottom: 20px; text-shadow: 0 0 20px #FFD700;">
+          OPPONENT DISCONNECTED
+        </h2>
+        <p style="font-size: 1.2rem; color: rgba(255,255,255,0.8); margin-bottom: 15px;">
+          <strong style="color: #00ffff;">${opponentName}</strong> has left the game.
+        </p>
+        <p style="font-size: 0.9rem; color: rgba(255,255,255,0.5); margin-bottom: 40px; line-height: 1.6;">
+          The race has been paused. You can wait for them to rejoin or return to the lobby.
+        </p>
+        <div style="display: flex; gap: 20px; justify-content: center;">
+          <button id="wait-reconnect-btn" style="
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            background: transparent;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px #00ffff;
+          ">WAIT (60s)</button>
+          <button id="return-lobby-btn" style="
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            background: transparent;
+            border: 2px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+          ">RETURN TO LOBBY</button>
+        </div>
+        <p id="reconnect-timer" style="
+          margin-top: 20px;
+          font-size: 0.8rem;
+          color: rgba(255,255,255,0.4);
+          display: none;
+        ">Waiting for reconnection...</p>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Return to lobby button
+    document.getElementById('return-lobby-btn').addEventListener('click', () => {
+      overlay.remove();
+      if (onReturnToLobby) onReturnToLobby();
+    });
+
+    // Wait for reconnect button
+    let waitTimeout;
+    document.getElementById('wait-reconnect-btn').addEventListener('click', () => {
+      const timerText = document.getElementById('reconnect-timer');
+      timerText.style.display = 'block';
+
+      let countdown = 60;
+      const waitBtn = document.getElementById('wait-reconnect-btn');
+      waitBtn.disabled = true;
+      waitBtn.style.opacity = '0.5';
+
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        timerText.textContent = `Waiting for reconnection... ${countdown}s`;
+
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          timerText.textContent = 'Opponent did not rejoin. Returning to lobby...';
+          setTimeout(() => {
+            overlay.remove();
+            if (onReturnToLobby) onReturnToLobby();
+          }, 2000);
+        }
+      }, 1000);
+
+      // If opponent rejoins, close the overlay
+      const checkReconnect = setInterval(() => {
+        const scene = game.current_scene;
+        if (scene && scene.players.length >= 2) {
+          clearInterval(countdownInterval);
+          clearInterval(checkReconnect);
+          overlay.remove();
+          scene.STATE = "running"; // Resume game
+          console.log("[MP] Opponent rejoined! Resuming game.");
+        }
+      }, 500);
+    });
+  }
 
   // ===== ROOM RESET (REMATCH) =====
   socket.on("room:reset", (data) => {
@@ -3155,7 +3522,7 @@ if (mode === "online") {
     if (gameMode !== "online") {
       // Track as online for solo/local games
       (function() {
-        const serverUrl = 'https://polyracer-production.up.railway.app';
+        const serverUrl = window.location.origin; // Dynamic URL for localhost and Railway
 
         // Generate or get stored anonymous ID
         let anonymousId = localStorage.getItem('anonymousId');
