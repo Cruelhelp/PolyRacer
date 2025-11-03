@@ -69,10 +69,18 @@
 
     /* Canvas container */
     #game-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
       display: block;
       background: transparent;
+    }
+
+    /* Prevent canvas from being affected by mobile keyboard */
+    #game-canvas.keyboard-visible {
+      height: 100vh;
     }
 
     /* Game HUD Overlay */
@@ -240,6 +248,24 @@
     }
 
     #win-screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Idle Screen (same styling as win screen) */
+    #idle-screen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    #idle-screen.active {
       opacity: 1;
       pointer-events: all;
     }
@@ -463,8 +489,13 @@
       #back-btn {
         top: 15px;
         left: 15px;
-        padding: 10px 20px;
-        font-size: 0.7rem;
+        width: 44px;
+        height: 44px;
+      }
+
+      #back-btn svg {
+        width: 18px;
+        height: 18px;
       }
 
       .game-title {
@@ -554,11 +585,6 @@
       #countdown-display {
         font-size: 6rem;
       }
-
-      #back-btn {
-        padding: 8px 16px;
-        font-size: 0.65rem;
-      }
     }
 
     @media (max-width: 480px) {
@@ -631,14 +657,15 @@
       }
 
       #back-btn {
-        padding: 6px 12px;
-        font-size: 0.6rem;
-        letter-spacing: 2px;
+        top: 12px;
+        left: 12px;
+        width: 40px;
+        height: 40px;
       }
 
       #back-btn svg {
-        width: 12px;
-        height: 12px;
+        width: 16px;
+        height: 16px;
       }
     }
 
@@ -1045,28 +1072,80 @@
         font-size: 1.1rem;
       }
     }
+
+    /* Touch-friendly buttons */
+    @media (hover: none) and (pointer: coarse) {
+      #back-btn {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      #back-btn:active {
+        transform: scale(0.95);
+      }
+
+      /* Ensure 44px minimum touch target on all interactive elements */
+      .home-row-keyboard button, .full-keyboard button, .im-ready-btn {
+        min-height: 44px;
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="loading-overlay"></div>
 
-  <!-- Back Button -->
-  <a href="modes.html" id="back-btn" style="position: fixed; top: 30px; left: 30px; padding: 14px 28px; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 3px; color: #00ffff; background: rgba(0, 0, 0, 0.8); border: 2px solid #00ffff; text-decoration: none; z-index: 500; transition: all 0.3s ease; backdrop-filter: blur(10px); text-shadow: 0 0 10px #00ffff; display: flex; align-items: center; gap: 8px;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+  <!-- Unified Back Button - Icon Focused -->
+  <a href="modes.html" id="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M19 12H5M12 19l-7-7 7-7"/>
     </svg>
-    BACK
   </a>
   <style>
-    #back-btn:hover {
-      background: rgba(0, 255, 255, 0.15);
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-      transform: translateX(-8px);
-      border-color: #fff;
-      color: #fff;
+    #back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1.5px solid rgba(0, 255, 255, 0.3);
+      border-radius: 50%;
+      text-decoration: none;
+      z-index: 1000;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
+
+    #back-btn:hover {
+      background: rgba(0, 255, 255, 0.1);
+      border-color: #00ffff;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+      transform: scale(1.08);
+    }
+
+    #back-btn:active {
+      transform: scale(0.95);
+    }
+
+    #back-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: #00ffff;
+      transition: all 0.3s ease;
+      filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.5));
+    }
+
     #back-btn:hover svg {
-      transform: translateX(-4px);
+      stroke: #fff;
+      filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+      transform: translateX(-2px);
     }
   </style>
 
@@ -1169,6 +1248,14 @@
       <p class="win-stats" id="win-score">Score: 0</p>
       <p class="win-stats" id="win-combo">Max Combo: 0</p>
       <p class="win-restart" id="win-restart-text">PRESS SPACE TO RESTART</p>
+    </div>
+
+    <!-- Idle Screen -->
+    <div id="idle-screen">
+      <h2 class="win-title" style="color: #ffaa00;">RACE PAUSED</h2>
+      <p class="win-stats" style="font-size: 1.2rem; margin: 20px 0;">No typing detected for 15 seconds</p>
+      <p class="win-stats" id="idle-stats">Score: 0 | Progress: 0%</p>
+      <p class="win-restart">PRESS SPACE TO RETRY</p>
     </div>
   </div>
 
@@ -1422,6 +1509,14 @@ if (mobileControlsActive) {
         setTimeout(() => {
           canStartGame = true;
         }, 1000);
+      } else if (scene.STATE === "idle" && scene.canRestart) {
+        e.preventDefault();
+        console.log('[MOBILE] Restarting race after idle timeout via tap');
+        game.startScene("PolyRace");
+        canStartGame = false;
+        setTimeout(() => {
+          canStartGame = true;
+        }, 1000);
       }
     });
 
@@ -1587,10 +1682,11 @@ class Runner extends Entity {
 
     if(this.isWordMode){
       const currentChar = this.nextKey[this.wordProgress];
+      const checkChar = currentChar.toLowerCase(); // Convert to lowercase for key checking
 
-      if(keys[currentChar] && !this.keyPressed){
+      if(keys[checkChar] && !this.keyPressed){
         this.keyPressed=true;
-        this.lastKey=currentChar;
+        this.lastKey=checkChar;
 
         const timeSinceLastKey = now - this.lastKeyTime;
         this.keySpeed = timeSinceLastKey;
@@ -1638,6 +1734,9 @@ class Runner extends Entity {
         this.spawnParticles(Math.floor(12 + speedBonus * 0.5));
         this.playBeep(440 + this.combo * 50);
 
+        // Reset idle timer on activity
+        if(this.scene) this.scene.lastActivityTime = Date.now();
+
         this.wordProgress++;
 
         if(this.wordProgress >= this.nextKey.length){
@@ -1646,9 +1745,10 @@ class Runner extends Entity {
       }
 
       if(!this.keyPressed && this.scene.STATE==="running"){
-        for(let i = 97; i <= 122; i++){
-          const char = String.fromCharCode(i);
-          if(keys[char] && char !== currentChar){
+        // Check for wrong key press - check all printable characters
+        const allKeys = 'abcdefghijklmnopqrstuvwxyz .,!?\'"';
+        for(let char of allKeys){
+          if(keys[char] && char !== checkChar){
             this.wrongKeyPenalty = 10;
             this.combo = 0;
             this.playBeep(200);
@@ -1713,6 +1813,9 @@ class Runner extends Entity {
 
         this.spawnParticles(Math.floor(12 + speedBonus * 0.5));
         this.playBeep(440 + this.combo * 50);
+
+        // Reset idle timer on activity
+        if(this.scene) this.scene.lastActivityTime = Date.now();
       }
 
       if(!this.keyPressed && this.scene.STATE==="running"){
@@ -2203,6 +2306,18 @@ class Runner extends Entity {
       ctx.fillText(this.speedBonusText, pos.x, bonusY);
     }
 
+    // Finish line warning when close (90-99%)
+    if(this.progressPercent >= 90 && this.progressPercent < 100 && this.scene.STATE === "running"){
+      const pulse = (Math.sin(Date.now() * 0.01) + 1) * 0.5; // 0 to 1
+      ctx.globalAlpha = 0.7 + pulse * 0.3;
+      ctx.font="bold 28px 'Orbitron'";
+      ctx.fillStyle='#ffff00';
+      ctx.shadowColor='#ffff00';
+      ctx.shadowBlur=30;
+      ctx.textAlign="center";
+      ctx.fillText('FINISH LINE AHEAD!', pos.x, keyY - 120);
+    }
+
     ctx.restore();
   }
 
@@ -2333,19 +2448,28 @@ PolyRaceScene.init=function(){
 
   this.playerCount = parseInt(urlPlayers) || 2;
 
+  // Race distance based on type
   if(urlRaceType === "marathon") {
-    this.raceDistancePixels = 2400;
+    this.raceDistancePixels = 2400; // Long race
+  } else if(urlRaceType === "sprint") {
+    this.raceDistancePixels = 400; // Quick race
   } else {
-    this.raceDistancePixels = 800;
+    this.raceDistancePixels = 600; // Default: shorter for better UX (reduced from 800)
   }
 
   this.atmosphereOffset=0;
   this.cameraX=0;
   this.targetCameraX=0;
+  this.cameraY=0; // Vertical camera offset for mobile keyboard
   this.gridOffset=0;
 
   // Frame counter for throttled updates
   this._keyIndicatorFrame = 0;
+
+  // Idle detection
+  this.lastActivityTime = Date.now();
+  this.idleTimeout = 15000; // 15 seconds of no typing
+  this.isIdle = false;
 
   this.initPlayers();
   this.updateUIState();
@@ -2406,6 +2530,7 @@ PolyRaceScene.updateUIState=function(){
   const statsHud = document.getElementById('stats-hud');
   const keyIndicator = document.getElementById('key-indicator');
   const winScreen = document.getElementById('win-screen');
+  const idleScreen = document.getElementById('idle-screen');
 
   if(this.STATE === "menu"){
     if(this.selectedMode !== "online") {
@@ -2414,16 +2539,25 @@ PolyRaceScene.updateUIState=function(){
     statsHud.style.display = 'none';
     keyIndicator.style.display = 'none';
     winScreen.classList.remove('active');
+    idleScreen.classList.remove('active');
   } else if(this.STATE === "countdown" || this.STATE === "running"){
     titleCard.style.display = 'none';
     statsHud.style.display = 'flex';
     keyIndicator.style.display = 'flex';
     winScreen.classList.remove('active');
+    idleScreen.classList.remove('active');
   } else if(this.STATE === "win"){
     titleCard.style.display = 'none';
     statsHud.style.display = 'none';
     keyIndicator.style.display = 'none';
     winScreen.classList.add('active');
+    idleScreen.classList.remove('active');
+  } else if(this.STATE === "idle"){
+    titleCard.style.display = 'none';
+    statsHud.style.display = 'none';
+    keyIndicator.style.display = 'none';
+    winScreen.classList.remove('active');
+    idleScreen.classList.add('active');
   }
 };
 
@@ -2446,7 +2580,7 @@ PolyRaceScene.updateKeyIndicator=function(){
 
       if(p.isWordMode) {
         displayKey = p.nextKey[p.wordProgress].toUpperCase();
-        isPressed = this.world.keys[p.nextKey[p.wordProgress]];
+        isPressed = this.world.keys[p.nextKey[p.wordProgress].toLowerCase()];
       } else {
         displayKey = p.nextKey.toUpperCase();
         isPressed = this.world.keys[p.nextKey];
@@ -2468,6 +2602,10 @@ PolyRaceScene.keyEvents=function(e){
   if(e.key===" "){
     if(this.STATE==="menu"){ this.startCountdown(); }
     else if(this.STATE==="win" && this.canRestart){ this.world.startScene("PolyRace"); }
+    else if(this.STATE==="idle" && this.canRestart){
+      console.log('[IDLE] Restarting race after idle timeout');
+      this.world.startScene("PolyRace");
+    }
   }
   if(e.key==="Escape" && this.STATE==="running"){
     this.STATE="menu";
@@ -2522,6 +2660,11 @@ PolyRaceScene.updateCamera=function(){
     this.targetCameraX = Math.max(0, this.targetCameraX);
 
     this.cameraX += (this.targetCameraX - this.cameraX) * 0.08;
+
+    // Vertical camera offset for mobile keyboard
+    // Shift view up by 120px when keyboard is active to keep runner in view
+    const targetCameraY = window.mobileControlsActive ? -120 : 0;
+    this.cameraY += (targetCameraY - this.cameraY) * 0.1;
   }
 };
 
@@ -2529,6 +2672,16 @@ PolyRaceScene.updatePlayers=function(){
   if(this.STATE==="running"){
     this.raceTime = ((Date.now() - this.raceStartTime) / 1000).toFixed(1);
     document.getElementById('time-display').textContent = `${this.raceTime}s`;
+
+    // Check for idle timeout
+    const timeSinceActivity = Date.now() - this.lastActivityTime;
+    if(timeSinceActivity > this.idleTimeout && !this.isIdle){
+      console.log('[IDLE] User inactive for', timeSinceActivity, 'ms - ending game');
+      this.isIdle = true;
+      this.STATE = "idle";
+      this.showIdleOverlay();
+      return;
+    }
 
     this.players.forEach(p=>{
       p.checkKeyPress();
@@ -2560,7 +2713,7 @@ PolyRaceScene.renderBackground=function(){
   }
 
   ctx.save();
-  ctx.translate(-this.cameraX, 0);
+  ctx.translate(-this.cameraX, this.cameraY);
 
   ctx.save();
   ctx.strokeStyle="rgba(0,255,255,0.2)";
@@ -2615,10 +2768,18 @@ PolyRaceScene.renderBackground=function(){
     ctx.restore();
   }
 
-  // Finish line (more faded)
+  // Finish line with glow and animation
   const finishX = this.players[0].startX + this.raceDistancePixels;
 
+  // Pulsing glow effect
+  const glowIntensity = (Math.sin(Date.now() * 0.005) + 1) * 0.5; // 0 to 1
+
   ctx.save();
+
+  // Add glowing aura behind finish line
+  ctx.shadowColor = "#00ffff";
+  ctx.shadowBlur = 30 + glowIntensity * 20;
+  ctx.globalAlpha = 0.6 + glowIntensity * 0.2;
 
   const topWidth = 40;
   const bottomWidth = 120;
@@ -2714,6 +2875,20 @@ PolyRaceScene.showWinScreen=function(){
   this.canRestart = true;
 };
 
+PolyRaceScene.showIdleOverlay=function(){
+  if(this.STATE !== "idle") return;
+
+  const idleStats = document.getElementById('idle-stats');
+  const player = this.players[0];
+
+  if(player){
+    idleStats.textContent = `Score: ${player.score} | Progress: ${Math.floor(player.progressPercent)}%`;
+  }
+
+  this.updateUIState();
+  this.canRestart = true;
+};
+
 PolyRaceScene.render=function(){
   if(this.STATE==="countdown") {
     this.updateCountdown();
@@ -2729,7 +2904,7 @@ PolyRaceScene.render=function(){
 
   const ctx = this.ctx;
   ctx.save();
-  ctx.translate(-this.cameraX, 0);
+  ctx.translate(-this.cameraX, this.cameraY);
   this.players.forEach(p=>p.draw());
 
   if (this.selectedMode === "online" && this.STATE === "running") {
@@ -2819,7 +2994,13 @@ class GameWorld {
   resize(){
     this.W=window.innerWidth;
 
-    if (window.visualViewport) {
+    // When mobile controls are active, maintain full height
+    // Otherwise use Visual Viewport API
+    if (window.mobileControlsActive) {
+      // Keep canvas at full height - keyboard is overlaid on top
+      this.H = window.innerHeight;
+    } else if (window.visualViewport) {
+      // Use Visual Viewport API for non-mobile or when keyboard isn't showing
       this.H = window.visualViewport.height;
     } else {
       this.H = window.innerHeight;
@@ -3139,65 +3320,41 @@ if (mode === "online") {
     console.log("[MP] Room updated:", data.room);
     roomData = data.room;
     updatePlayerStatus(roomData);
-    
-    // Check if both players are ready and in waiting room
-    if (roomData.players.length === 2 && 
-        roomData.players.every(p => p.ready) && 
-        roomData.gameState === 'waiting') {
-      console.log("[MP] Both players ready! Waiting for server countdown...");
-    }
-  });
-
-  // Listen for BOTH possible countdown events (for compatibility)
-  socket.on("game:countdown", (data) => {
-    console.log("[MP] Received game:countdown event");
-    handleCountdownStart(data);
   });
 
   socket.on("game:countdown-start", (data) => {
-    console.log("[MP] Received game:countdown-start event");
-    handleCountdownStart(data);
-  });
-
-  function handleCountdownStart(data) {
     console.log("[MP] Countdown starting!", data);
     roomData = data.room;
 
-    // Hide waiting room
     const waitingRoom = document.getElementById('online-waiting-room');
     waitingRoom.classList.remove('active');
+
+    const serverCountdownStart = data.countdownStartTime;
+    const now = Date.now();
+    const clientDelay = now - serverCountdownStart;
+
+    console.log(`[MP] Countdown started ${clientDelay}ms ago (latency compensation)`);
 
     const scene = game.current_scene;
     if (scene) {
       console.log("[MP] Setting scene to countdown state");
-      
-      // Initialize players if not already done
+      scene.STATE = "countdown";
+      scene.countIndex = 0;
+      scene.countStart = new Date(serverCountdownStart);
+
       if (!scene.players || scene.players.length === 0) {
         console.log("[MP] Initializing players for countdown");
         scene.initPlayers();
       }
 
-      // Set player names from room data
-      if (roomData && roomData.players) {
-        roomData.players.forEach((playerData, index) => {
-          if (scene.players[index]) {
-            scene.players[index].username = playerData.name;
-            console.log(`[MP] Set player ${index} name: ${playerData.name}`);
-          }
-        });
-      }
-
-      // Start the countdown immediately (3-2-1-GO)
-      scene.STATE = "countdown";
-      scene.countIndex = 0;
-      scene.countStart = new Date();
       scene.updateUIState();
+      scene.startCountdown();
 
       console.log("[MP] Countdown initialized, players:", scene.players.length);
     } else {
       console.error("[MP] No scene found for countdown!");
     }
-  }
+  });
 
   socket.on("game:race-start", (data) => {
     console.log("[MP] Race starting NOW!");
