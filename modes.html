@@ -32,46 +32,55 @@
       overflow-y: auto;
     }
 
-    /* Back to Home Button */
+    /* Unified Back Button - Icon Focused */
     #back-home {
       position: fixed;
-      top: 30px;
-      left: 30px;
-      padding: 14px 28px;
+      top: 20px;
+      left: 20px;
+      width: 48px;
+      height: 48px;
+      padding: 0;
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--cyan);
-      background: rgba(0, 0, 0, 0.8);
-      border: 2px solid var(--cyan);
+      background: rgba(0, 0, 0, 0.6);
+      border: 1.5px solid rgba(0, 255, 255, 0.3);
+      border-radius: 50%;
       cursor: pointer;
-      text-decoration: none;
       z-index: 1000;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       backdrop-filter: blur(10px);
-      text-shadow: 0 0 10px var(--cyan);
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     #back-home:hover {
-      background: rgba(0, 255, 255, 0.15);
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-      transform: translateX(-8px);
-      border-color: #fff;
-      color: #fff;
+      background: rgba(0, 255, 255, 0.1);
+      border-color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+      transform: scale(1.08);
+    }
+
+    #back-home:active {
+      transform: scale(0.95);
     }
 
     #back-home svg {
-      width: 16px;
-      height: 16px;
-      transition: transform 0.3s ease;
+      width: 20px;
+      height: 20px;
+      stroke: var(--cyan);
+      transition: all 0.3s ease;
+      filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.5));
     }
 
     #back-home:hover svg {
-      transform: translateX(-4px);
+      stroke: #fff;
+      filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+      transform: translateX(-2px);
+    }
+
+    #back-text {
+      display: none;
     }
 
     /* Container */
@@ -143,6 +152,38 @@
       transform: translateY(-10px);
     }
 
+    .mode-card.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: grayscale(0.8);
+    }
+
+    .mode-card.disabled:hover {
+      border-color: rgba(0, 255, 255, 0.3);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .mode-card .disabled-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.8);
+      text-align: center;
+      z-index: 10;
+      width: 80%;
+      line-height: 1.6;
+    }
+
     .mode-icon {
       margin-bottom: 25px;
       filter: drop-shadow(0 0 15px currentColor);
@@ -191,6 +232,8 @@
       z-index: 999;
       padding: 40px;
       overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
     }
 
     .lobby-container {
@@ -538,46 +581,6 @@
       line-height: 1.5;
     }
 
-    .back-btn {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 14px 32px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--cyan);
-      background: rgba(0, 0, 0, 0.8);
-      border: 2px solid var(--cyan);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-      text-shadow: 0 0 10px var(--cyan);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      z-index: 500;
-    }
-
-    .back-btn:hover {
-      background: rgba(0, 255, 255, 0.15);
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-      transform: translateX(-50%) translateY(-3px);
-      border-color: #fff;
-      color: #fff;
-    }
-
-    .back-btn svg {
-      width: 16px;
-      height: 16px;
-      transition: transform 0.3s ease;
-    }
-
-    .back-btn:hover svg {
-      transform: translateX(-4px);
-    }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -609,8 +612,14 @@
       #back-home {
         top: 15px;
         left: 15px;
-        padding: 10px 20px;
-        font-size: 0.75rem;
+        width: 44px;
+        height: 44px;
+        z-index: 1100;
+      }
+
+      #back-home svg {
+        width: 18px;
+        height: 18px;
       }
     }
 
@@ -671,13 +680,11 @@
         letter-spacing: 2px;
       }
 
-      .back-btn {
-        bottom: 20px;
-        padding: 12px 28px;
-        font-size: 0.8rem;
+      /* Lobby responsive */
+      #online-lobby {
+        padding: 20px 15px;
       }
 
-      /* Lobby responsive */
       .lobby-container {
         grid-template-columns: 1fr;
         gap: 15px;
@@ -685,7 +692,7 @@
       }
 
       .lobby-main, .lobby-chat {
-        padding: 20px;
+        padding: 20px 15px;
         max-height: none;
       }
 
@@ -705,11 +712,55 @@
         font-size: 0.85rem;
       }
 
+      /* Username section mobile */
+      #username-section {
+        padding: 12px 15px !important;
+        margin-bottom: 15px !important;
+      }
+
+      #username-section label {
+        font-size: 0.65rem !important;
+        margin-bottom: 6px !important;
+      }
+
+      #username-section > div > div {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+
+      #username-input {
+        font-size: 0.85rem !important;
+        padding: 10px 12px !important;
+      }
+
+      #change-username-btn {
+        width: 100%;
+        padding: 10px 16px !important;
+        font-size: 0.75rem !important;
+      }
+
+      /* Connection status mobile */
       #connection-status {
-        flex-direction: column;
-        gap: 8px;
-        padding: 10px 15px;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 10px 15px !important;
         text-align: center;
+      }
+
+      #connection-status > div:nth-child(2) {
+        text-align: center;
+      }
+
+      /* Lobby title mobile */
+      .lobby-main h3 {
+        font-size: 1rem !important;
+        letter-spacing: 2px !important;
+        margin-bottom: 15px !important;
+      }
+
+      /* Room list mobile */
+      .room-list {
+        gap: 12px !important;
       }
 
       #status-text {
@@ -781,9 +832,39 @@
         font-size: 0.8rem;
       }
 
-      /* Players list */
+      /* Players list mobile */
       #players-list {
-        max-height: 150px;
+        max-height: 200px !important;
+        padding: 8px !important;
+      }
+
+      #players-list > div {
+        font-size: 0.8rem !important;
+        padding: 6px 8px !important;
+        margin-bottom: 5px !important;
+      }
+
+      #players-list > div > div:nth-child(2) > div:first-child {
+        font-size: 0.8rem !important;
+      }
+
+      #players-list > div > div:nth-child(2) > div:last-child {
+        font-size: 0.65rem !important;
+      }
+
+      .lobby-chat {
+        min-height: 300px;
+      }
+
+      .lobby-chat h3 {
+        font-size: 1rem !important;
+        letter-spacing: 2px !important;
+        margin-bottom: 12px !important;
+      }
+
+      #players-online {
+        font-size: 0.8rem !important;
+        padding: 3px 8px !important;
       }
 
       /* Room UI Modal */
@@ -867,8 +948,25 @@
       }
 
       #back-home {
-        padding: 8px 16px;
-        font-size: 0.7rem;
+        top: 12px;
+        left: 12px;
+        width: 40px;
+        height: 40px;
+        z-index: 1100;
+      }
+
+      #back-home svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Lobby - extra small screens */
+      #online-lobby {
+        padding: 15px 10px;
+      }
+
+      .lobby-main, .lobby-chat {
+        padding: 15px 10px !important;
       }
 
       .section-title {
@@ -878,6 +976,69 @@
 
       .action-btn {
         font-size: 0.8rem;
+        padding: 14px !important;
+      }
+
+      .action-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      #username-section {
+        padding: 10px 12px !important;
+      }
+
+      #username-input {
+        font-size: 0.8rem !important;
+        padding: 8px 10px !important;
+      }
+
+      #change-username-btn {
+        font-size: 0.7rem !important;
+        padding: 8px 14px !important;
+      }
+
+      #connection-status {
+        padding: 8px 12px !important;
+      }
+
+      #status-text {
+        font-size: 0.75rem !important;
+      }
+
+      #status-detail {
+        font-size: 0.65rem !important;
+      }
+
+      #players-online-count {
+        font-size: 0.7rem !important;
+        padding: 3px 10px !important;
+      }
+
+      .room-card {
+        padding: 12px !important;
+      }
+
+      .room-info h3 {
+        font-size: 1rem !important;
+      }
+
+      .room-info p {
+        font-size: 0.75rem !important;
+      }
+
+      .room-join-btn {
+        font-size: 0.75rem !important;
+        padding: 8px 16px !important;
+      }
+
+      .chat-messages {
+        max-height: 200px !important;
+        padding: 10px !important;
+      }
+
+      .chat-message {
+        font-size: 0.75rem !important;
       }
 
       #room-ui h2 {
@@ -887,7 +1048,7 @@
 
     /* Touch-friendly buttons */
     @media (hover: none) and (pointer: coarse) {
-      .mode-card, .action-btn, .room-join-btn, .modal-btn, .chat-send {
+      .mode-card, .action-btn, .room-join-btn, .modal-btn, .chat-send, #change-username-btn, .room-card {
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
       }
@@ -896,8 +1057,17 @@
         transform: scale(0.98);
       }
 
-      .action-btn:active, .modal-btn:active {
+      .action-btn:active, .modal-btn:active, .room-join-btn:active, #change-username-btn:active {
         transform: scale(0.96);
+      }
+
+      .room-card:active {
+        transform: scale(0.99);
+      }
+
+      /* Larger touch targets on mobile */
+      .action-btn, .room-join-btn, #change-username-btn, .chat-send {
+        min-height: 44px;
       }
     }
   </style>
@@ -1054,12 +1224,6 @@
       </div>
     </div>
 
-    <button id="back-to-modes" class="back-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-      </svg>
-      BACK
-    </button>
   </div>
 
   <!-- Online Lobby Screen -->
@@ -1236,8 +1400,25 @@
     // Save username to localStorage
     localStorage.setItem('username', state.username);
 
+    // Mobile detection
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     // Check for auto-join from invite link
     window.addEventListener('DOMContentLoaded', () => {
+      // Disable local 1v1 mode on mobile
+      if (isMobileDevice) {
+        const localCard = document.querySelector('.mode-card.local');
+        if (localCard) {
+          localCard.classList.add('disabled');
+
+          // Add disabled overlay message
+          const overlay = document.createElement('div');
+          overlay.className = 'disabled-overlay';
+          overlay.innerHTML = '🖥️<br>DESKTOP ONLY<br><span style="font-size: 0.65rem; opacity: 0.7;">Requires 2 players on same device</span>';
+          localCard.appendChild(overlay);
+        }
+      }
+
       const urlParams = new URLSearchParams(window.location.search);
       const joinCode = urlParams.get('join');
 
@@ -1329,6 +1510,12 @@
     document.querySelectorAll('.mode-card').forEach(card => {
       card.addEventListener('click', () => {
         const mode = card.dataset.mode;
+
+        // Prevent local 1v1 mode on mobile
+        if (mode === 'local' && isMobileDevice) {
+          return;
+        }
+
         state.currentMode = mode;
 
         if (mode === 'online') {
@@ -1381,13 +1568,6 @@
       }
     }
 
-    // Back to game mode selection
-    document.getElementById('back-to-modes').addEventListener('click', () => {
-      document.getElementById('typing-mode-selection').style.display = 'none';
-      document.getElementById('mode-selection').style.display = 'flex';
-      state.currentMode = null;
-      state.selectedTypingMode = null;
-    });
 
     // Online lobby functionality
     let lobbySocket = null;
