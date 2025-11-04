@@ -145,6 +145,13 @@
       }
     }
 
+    /* Performance optimization: GPU acceleration for animations */
+    .player-status-icon,
+    .player-status-badge {
+      will-change: opacity;
+      transform: translateZ(0);
+    }
+
     /* Game Stats HUD */
     #stats-hud {
       position: absolute;
@@ -935,6 +942,8 @@
       filter: grayscale(0);
       opacity: 1;
       animation: pulse 2s ease-in-out infinite;
+      /* Use CSS containment for performance */
+      contain: layout style paint;
     }
 
     .player-status-name {
@@ -964,6 +973,8 @@
       color: #ffaa00;
       border: 1px solid #ffaa00;
       animation: pulse-badge 1.5s ease-in-out infinite;
+      /* Use CSS containment for performance */
+      contain: layout style paint;
     }
 
     .player-status-badge.ready {
@@ -3058,17 +3069,33 @@ class GameWorld {
     }
     this.loop();
   }
-  // OPTIMIZED: FPS limiter for mobile
+  // OPTIMIZED: FPS limiter for mobile + waiting room throttle
   loop(){
     const now = Util.timeStamp();
-    
+
+    // PERFORMANCE FIX: Drastically reduce rendering when in waiting room
+    const waitingRoom = document.getElementById('online-waiting-room');
+    const inWaitingRoom = waitingRoom && waitingRoom.classList.contains('active');
+
+    if (inWaitingRoom) {
+      // Render at 5 FPS when in waiting room (every 200ms)
+      if (now - this.lastFrameTime < 200) {
+        requestAnimationFrame(() => this.loop());
+        return;
+      }
+      this.lastFrameTime = now;
+      // Skip game rendering entirely when in waiting room
+      requestAnimationFrame(()=>this.loop());
+      return;
+    }
+
     // FPS limiter for mobile
     if (this.isMobile && now - this.lastFrameTime < this.frameTime) {
       requestAnimationFrame(() => this.loop());
       return;
     }
     this.lastFrameTime = now;
-    
+
     this.FPS.now=now;
     this.FPS.delta+=Math.min(1,(this.FPS.now-this.FPS.last)/1000);
     while(this.FPS.delta>this.FPS.step){
@@ -3297,18 +3324,43 @@ if (mode === "online") {
 
     let readyHandlerAdded = false;
     if (!readyHandlerAdded) {
+      // Optimized ready button with immediate feedback
       readyBtn.addEventListener('click', () => {
+        // Prevent double clicks
+        if (readyBtn.disabled) return;
+
         console.log('[MP] Clicked READY');
-        socket.emit('player:ready');
+
+        // Immediate visual feedback
         readyBtn.disabled = true;
+        readyBtn.style.pointerEvents = 'none';
         readyBtn.innerHTML = '<span class="btn-text">WAITING FOR OPPONENT...</span>';
         readyHint.textContent = 'Waiting for other player...';
-      });
+
+        // Send to server
+        socket.emit('player:ready');
+      }, { once: false, passive: true });
       readyHandlerAdded = true;
     }
   }
 
+  // PERFORMANCE: Throttle DOM updates using requestAnimationFrame
+  let updateScheduled = false;
+  let latestRoomData = null;
+
   function updatePlayerStatus(room) {
+    latestRoomData = room;
+
+    if (updateScheduled) return;
+    updateScheduled = true;
+
+    requestAnimationFrame(() => {
+      updateScheduled = false;
+      performUpdate(latestRoomData);
+    });
+  }
+
+  function performUpdate(room) {
     if (!room || !room.players) return;
 
     const player1Status = document.getElementById('player1-status');
@@ -3320,22 +3372,24 @@ if (mode === "online") {
     const readyBtn = document.getElementById('im-ready-btn');
     const readyHint = document.getElementById('ready-hint');
 
-    if (room.players.length >= 1) {
-      const p1 = room.players[0];
+    // Batch all DOM reads first, then writes (prevent layout thrashing)
+    const p1 = room.players[0];
+    const p2 = room.players[1];
+    const hasP2 = room.players.length >= 2;
+
+    // Batch all DOM writes
+    if (p1) {
       player1Name.textContent = p1.name;
       player1Badge.textContent = p1.ready ? 'READY' : 'WAITING...';
       player1Badge.className = 'player-status-badge ' + (p1.ready ? 'ready' : 'waiting');
-      if (p1.ready) player1Status.classList.add('ready');
-      else player1Status.classList.remove('ready');
+      player1Status.classList.toggle('ready', p1.ready);
     }
 
-    if (room.players.length >= 2) {
-      const p2 = room.players[1];
+    if (hasP2 && p2) {
       player2Name.textContent = p2.name;
       player2Badge.textContent = p2.ready ? 'READY' : 'WAITING...';
       player2Badge.className = 'player-status-badge ' + (p2.ready ? 'ready' : 'waiting');
-      if (p2.ready) player2Status.classList.add('ready');
-      else player2Status.classList.remove('ready');
+      player2Status.classList.toggle('ready', p2.ready);
 
       if (!room.players[myPlayerIndex]?.ready) {
         readyBtn.disabled = false;
