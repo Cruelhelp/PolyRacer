@@ -1582,7 +1582,7 @@ class Body {
     this.position = new Vector(x,y);
     this.velocity = new Vector(0,0);
     this.acceleration = new Vector(0,0);
-    this.drag = 0.88;
+    this.drag = 0.92; // Increased from 0.88 for faster movement
   }
   applyForce(v){ this.acceleration.add(v); }
   integrate(){
@@ -1656,7 +1656,8 @@ class Runner extends Entity {
     this.animTime=0;
 
     this.wordProgress=0;
-    this.isWordMode = this.keySet.length > 10;
+    // Check if this is word/story mode by checking if items are multi-character strings
+    this.isWordMode = this.keySet.length > 0 && typeof this.keySet[0] === 'string' && this.keySet[0].length > 2;
 
     this.hasChampionStatus = false;
     this.hasFinished = false;
@@ -1717,7 +1718,7 @@ class Runner extends Entity {
           speedText = '';
         }
 
-        this.body.applyForce(new Vector(65 * forceMultiplier, 0));
+        this.body.applyForce(new Vector(85 * forceMultiplier, 0)); // Increased from 65 for faster racing
         this.popAlpha=1;
 
         const totalPoints = basePoints + speedBonus + (this.combo * 2);
@@ -1797,7 +1798,7 @@ class Runner extends Entity {
           speedText = '';
         }
 
-        this.body.applyForce(new Vector(65 * forceMultiplier, 0));
+        this.body.applyForce(new Vector(85 * forceMultiplier, 0)); // Increased from 65 for faster racing
         this.popAlpha=1;
 
         const totalPoints = basePoints + speedBonus + (this.combo * 2);
@@ -2232,12 +2233,46 @@ class Runner extends Entity {
     const shakeX = this.wrongKeyPenalty > 0 ? Math.sin(Date.now() * 0.5) * this.wrongKeyPenalty * 0.3 : 0;
 
     if(this.isWordMode){
-      ctx.font="bold 48px 'Orbitron'";
+      const fullText = this.nextKey;
+
+      // For story mode (long sentences), show a sliding window of text
+      let displayText = fullText;
+      let displayProgress = this.wordProgress;
+
+      if(fullText.length > 20) {
+        // This is a long sentence (story mode) - show small window
+        // Show 5 chars before and 15 chars after = ~20 chars total (2-3 words)
+        let start = Math.max(0, this.wordProgress - 5);
+        let end = Math.min(fullText.length, this.wordProgress + 15);
+
+        // Adjust to word boundaries
+        while(start > 0 && fullText[start - 1] !== ' ' && (this.wordProgress - start) < 10) start--;
+        while(end < fullText.length && fullText[end] !== ' ' && (end - this.wordProgress) < 20) end++;
+
+        displayText = fullText.substring(start, end);
+        displayProgress = this.wordProgress - start;
+
+        // Add ellipsis if text is truncated - but NOT at the very start
+        if(start > 0 && this.wordProgress > 8) {
+          displayText = '...' + displayText;
+          displayProgress += 3;
+        }
+        if(end < fullText.length && this.wordProgress < fullText.length - 10) {
+          displayText = displayText + '...';
+        }
+
+        // Use smaller font for story mode
+        ctx.font="bold 36px 'Orbitron'";
+      } else {
+        // Regular word mode - larger font
+        ctx.font="bold 48px 'Orbitron'";
+      }
+
       ctx.textAlign="center";
 
-      const word = this.nextKey.toUpperCase();
-      const completedPart = word.substring(0, this.wordProgress);
-      const remainingPart = word.substring(this.wordProgress);
+      const word = displayText.toUpperCase();
+      const completedPart = word.substring(0, displayProgress);
+      const remainingPart = word.substring(displayProgress);
 
       const totalWidth = ctx.measureText(word).width;
       const completedWidth = ctx.measureText(completedPart).width;
@@ -2258,7 +2293,8 @@ class Runner extends Entity {
 
       if(this.popAlpha>0){
         ctx.globalAlpha=this.popAlpha;
-        ctx.font="bold 56px 'Orbitron'";
+        // Use matching font size for pop effect
+        ctx.font = fullText.length > 20 ? "bold 42px 'Orbitron'" : "bold 56px 'Orbitron'";
         ctx.fillStyle=this.color;
         ctx.fillText(word, pos.x, keyY);
       }
